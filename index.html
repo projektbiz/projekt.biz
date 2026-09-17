@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PROJECTORA — Zarządzanie projektem</title>
+<title>PROJECTORA — Neon Edition</title>
 <style>
 :root{
   --bg:#080b14;--panel:#101625;--panel2:#151d2e;--text:#f4f7ff;--muted:#9aa6bd;
@@ -167,6 +167,488 @@ button:active,.btn:active{transform:translateY(0) scale(.98)}
 .info-mini{padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025)}
 .info-mini strong{display:block;margin-bottom:6px}
 @media(max-width:900px){.info-grid{grid-template-columns:1fr}.sidebar{position:relative;width:100%;height:auto}.main{margin-left:0!important}.quiz-launch{margin-left:0!important;margin-top:10px}}
+
+
+/* =========================================================
+   PROJECTORA NEON EDITION — animated cyber dashboard
+   Treść lekcji pozostaje bez zmian.
+   ========================================================= */
+:root{
+  --neon-purple:#9b5cff;
+  --neon-violet:#c26bff;
+  --neon-blue:#27d8ff;
+  --neon-cyan:#5ff7ff;
+  --neon-pink:#ff4fd8;
+  --neon-green:#49ffb1;
+  --neon-bg:#050711;
+}
+
+body{
+  background:
+    radial-gradient(circle at 12% 12%, rgba(155,92,255,.18), transparent 25%),
+    radial-gradient(circle at 88% 16%, rgba(39,216,255,.13), transparent 24%),
+    radial-gradient(circle at 55% 90%, rgba(255,79,216,.08), transparent 28%),
+    #050711;
+}
+
+/* animated ambient glow */
+body::after{
+  content:"";
+  position:fixed;
+  inset:-25%;
+  pointer-events:none;
+  z-index:-2;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(155,92,255,.08), transparent 18%),
+    radial-gradient(circle at 70% 55%, rgba(39,216,255,.06), transparent 20%);
+  filter:blur(25px);
+  animation:ambientMove 12s ease-in-out infinite alternate;
+}
+@keyframes ambientMove{
+  0%{transform:translate3d(-2%,0,0) scale(1)}
+  50%{transform:translate3d(2%,-2%,0) scale(1.04)}
+  100%{transform:translate3d(-1%,2%,0) scale(1.08)}
+}
+
+/* subtle cyber grid */
+body:before{
+  background-image:
+    linear-gradient(rgba(155,92,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(39,216,255,.035) 1px,transparent 1px);
+  background-size:38px 38px;
+  animation:gridShift 18s linear infinite;
+}
+@keyframes gridShift{
+  to{background-position:38px 38px}
+}
+
+/* scanline overlay */
+.app::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9998;
+  background:repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0) 0px,
+    rgba(255,255,255,0) 3px,
+    rgba(255,255,255,.012) 4px
+  );
+}
+
+/* SIDEBAR */
+.sidebar{
+  background:rgba(4,6,16,.84)!important;
+  border-right:1px solid rgba(155,92,255,.22)!important;
+  box-shadow:12px 0 55px rgba(0,0,0,.35), 8px 0 35px rgba(155,92,255,.035);
+}
+.logo{
+  position:relative;
+  text-shadow:
+    0 0 8px rgba(155,92,255,.9),
+    0 0 25px rgba(155,92,255,.55),
+    0 0 50px rgba(39,216,255,.2);
+  animation:logoPulse 3s ease-in-out infinite;
+}
+.logo span{
+  color:var(--neon-violet);
+  text-shadow:0 0 12px rgba(194,107,255,.95),0 0 30px rgba(194,107,255,.55);
+}
+@keyframes logoPulse{
+  50%{text-shadow:0 0 12px rgba(155,92,255,1),0 0 35px rgba(155,92,255,.65),0 0 65px rgba(39,216,255,.25)}
+}
+
+.nav-title{
+  color:#7f8bb0;
+  text-shadow:0 0 10px rgba(39,216,255,.12);
+}
+.nav button,.nav a{
+  position:relative;
+  overflow:hidden;
+  border:1px solid transparent;
+}
+.nav button::before,.nav a::before{
+  content:"";
+  position:absolute;
+  left:-110%;
+  top:0;
+  width:55%;
+  height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.11),transparent);
+  transform:skewX(-20deg);
+  transition:left .55s ease;
+}
+.nav button:hover::before,.nav a:hover::before,
+.nav button.active::before,.nav a.active::before{left:130%}
+
+.nav button:hover,.nav a:hover{
+  background:linear-gradient(90deg,rgba(155,92,255,.12),rgba(39,216,255,.045))!important;
+  border-color:rgba(155,92,255,.18);
+  box-shadow:0 0 18px rgba(155,92,255,.08);
+}
+.nav button.active,.nav a.active{
+  background:linear-gradient(90deg,rgba(155,92,255,.22),rgba(39,216,255,.07))!important;
+  border-color:rgba(155,92,255,.38)!important;
+  box-shadow:
+    inset 3px 0 var(--neon-violet),
+    0 0 18px rgba(155,92,255,.13),
+    inset 0 0 22px rgba(155,92,255,.035);
+}
+.nav button.active::after,.nav a.active::after{
+  content:"";
+  position:absolute;
+  right:10px;
+  top:50%;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--neon-cyan);
+  box-shadow:0 0 8px var(--neon-cyan),0 0 18px var(--neon-cyan);
+  transform:translateY(-50%);
+  animation:statusBlink 1.5s infinite;
+}
+@keyframes statusBlink{
+  50%{opacity:.35;box-shadow:0 0 3px var(--neon-cyan)}
+}
+
+/* progress */
+.progressBox{
+  background:linear-gradient(145deg,rgba(18,21,42,.92),rgba(6,9,20,.92))!important;
+  border-color:rgba(155,92,255,.25)!important;
+  box-shadow:0 0 28px rgba(155,92,255,.07), inset 0 0 25px rgba(39,216,255,.025);
+}
+.progress i{
+  background:linear-gradient(90deg,var(--neon-purple),var(--neon-blue),var(--neon-cyan))!important;
+  box-shadow:0 0 10px rgba(155,92,255,.65),0 0 24px rgba(39,216,255,.25);
+  position:relative;
+}
+.progress i::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+  animation:progressShine 2.2s linear infinite;
+}
+@keyframes progressShine{
+  from{transform:translateX(-100%)}
+  to{transform:translateX(250%)}
+}
+
+/* TOP BAR */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:20;
+  padding:10px 0;
+  margin-bottom:22px;
+  background:linear-gradient(180deg,rgba(5,7,17,.92),rgba(5,7,17,.55),transparent);
+  backdrop-filter:blur(7px);
+}
+.crumb{
+  text-shadow:0 0 12px rgba(39,216,255,.12);
+}
+.mode{
+  border-color:rgba(73,255,177,.25)!important;
+  background:rgba(73,255,177,.045)!important;
+  color:#9dffd3!important;
+  box-shadow:0 0 15px rgba(73,255,177,.06);
+}
+.mode::first-letter{
+  text-shadow:0 0 8px var(--neon-green);
+}
+
+/* HERO */
+.hero{
+  border:1px solid rgba(155,92,255,.30)!important;
+  box-shadow:
+    0 0 35px rgba(155,92,255,.09),
+    0 25px 90px rgba(0,0,0,.35),
+    inset 0 0 70px rgba(39,216,255,.025);
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(110deg,rgba(155,92,255,.55),transparent 35%,rgba(39,216,255,.45),transparent 75%,rgba(255,79,216,.35));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+  opacity:.65;
+  animation:borderFlow 6s linear infinite;
+}
+@keyframes borderFlow{
+  to{filter:hue-rotate(360deg)}
+}
+.hero::after{
+  width:360px;height:360px;
+  right:-120px;bottom:-190px;
+  border-color:rgba(39,216,255,.25);
+  box-shadow:0 0 100px rgba(39,216,255,.10), inset 0 0 45px rgba(155,92,255,.07);
+}
+
+.badge{
+  border-color:rgba(39,216,255,.35)!important;
+  color:#a7f7ff!important;
+  background:rgba(39,216,255,.055)!important;
+  box-shadow:0 0 18px rgba(39,216,255,.06);
+}
+.badge::before{
+  content:"◈";
+  margin-right:7px;
+  color:var(--neon-cyan);
+  text-shadow:0 0 9px var(--neon-cyan);
+}
+.gradient{
+  background:linear-gradient(100deg,#fff,var(--neon-blue),var(--neon-violet),var(--neon-pink),#fff);
+  background-size:250% auto;
+  animation:textFlow 5s linear infinite;
+  -webkit-background-clip:text;
+  background-clip:text;
+}
+@keyframes textFlow{
+  to{background-position:250% center}
+}
+.lead{
+  text-shadow:0 0 18px rgba(255,255,255,.025);
+}
+
+/* CTA */
+.cta{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(100deg,var(--neon-purple),#6c63ff,var(--neon-blue))!important;
+  background-size:200% auto!important;
+  box-shadow:
+    0 0 18px rgba(155,92,255,.24),
+    0 12px 40px rgba(0,0,0,.24);
+  animation:ctaFlow 4s linear infinite;
+}
+.cta::before{
+  content:"";
+  position:absolute;
+  top:0;bottom:0;left:-80%;
+  width:45%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:skewX(-20deg);
+  animation:ctaShine 3.2s ease-in-out infinite;
+}
+@keyframes ctaFlow{to{background-position:200% center}}
+@keyframes ctaShine{
+  0%,45%{left:-80%}
+  75%,100%{left:150%}
+}
+
+/* CARDS */
+.card,.info-mini,.question{
+  border-color:rgba(155,92,255,.13)!important;
+}
+.card:hover{
+  border-color:rgba(39,216,255,.32)!important;
+  box-shadow:
+    0 20px 55px rgba(0,0,0,.3),
+    0 0 25px rgba(155,92,255,.08),
+    inset 0 0 25px rgba(39,216,255,.018);
+}
+.card .icon{
+  filter:drop-shadow(0 0 9px rgba(39,216,255,.25));
+  animation:iconFloat 3s ease-in-out infinite;
+}
+@keyframes iconFloat{
+  50%{transform:translateY(-3px) scale(1.04)}
+}
+
+/* SECTION HEADINGS */
+h2{
+  text-shadow:0 0 22px rgba(155,92,255,.12);
+}
+h2::after{
+  content:"";
+  display:block;
+  width:85px;
+  height:2px;
+  margin-top:12px;
+  border-radius:99px;
+  background:linear-gradient(90deg,var(--neon-purple),var(--neon-blue),transparent);
+  box-shadow:0 0 10px rgba(39,216,255,.35);
+}
+
+/* GANTT */
+.gantt .bar,.gantt-bar{
+  background:linear-gradient(90deg,var(--neon-purple),var(--neon-blue),var(--neon-cyan))!important;
+  box-shadow:0 0 12px rgba(39,216,255,.23),0 0 24px rgba(155,92,255,.14);
+  position:relative;
+  overflow:hidden;
+}
+.gantt .bar::after,.gantt-bar::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:translateX(-100%);
+  animation:ganttShine 2.8s ease-in-out infinite;
+}
+@keyframes ganttShine{
+  0%,35%{transform:translateX(-100%)}
+  70%,100%{transform:translateX(150%)}
+}
+
+/* MILESTONES */
+.milestone,.mile.major .dot{
+  color:#ffd27a;
+  text-shadow:0 0 10px rgba(255,170,40,.55);
+}
+.mile.major .dot{
+  box-shadow:0 0 15px rgba(155,92,255,.4),0 0 35px rgba(39,216,255,.09)!important;
+}
+
+/* MONEY / COSTS */
+.money{
+  text-shadow:0 0 18px rgba(73,255,177,.16),0 0 38px rgba(155,92,255,.08);
+}
+.costBar i{
+  background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple),var(--neon-pink))!important;
+  box-shadow:0 0 12px rgba(155,92,255,.25);
+}
+
+/* INTERACTIVE CHOICES */
+.choice,.quizOption{
+  border-color:rgba(155,92,255,.13)!important;
+  background:linear-gradient(145deg,rgba(20,25,48,.9),rgba(8,11,24,.88))!important;
+}
+.choice:hover,.quizOption:hover{
+  border-color:rgba(39,216,255,.45)!important;
+  box-shadow:0 0 22px rgba(39,216,255,.08),0 10px 28px rgba(0,0,0,.25);
+}
+.feedback{
+  border:1px solid rgba(73,255,177,.16);
+  box-shadow:0 0 20px rgba(73,255,177,.045);
+}
+
+/* reveal animation gets a little more cinematic */
+.reveal.visible{
+  animation:neonReveal .7s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes neonReveal{
+  from{opacity:0;transform:translateY(18px);filter:blur(3px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+
+/* floating neon particles injected by JS */
+.neon-particle{
+  position:fixed;
+  width:2px;height:2px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:-1;
+  background:#fff;
+  box-shadow:0 0 7px currentColor,0 0 16px currentColor;
+  opacity:.55;
+  animation:particleDrift var(--dur) linear infinite;
+}
+@keyframes particleDrift{
+  0%{transform:translate3d(0,20px,0);opacity:0}
+  15%{opacity:.55}
+  85%{opacity:.55}
+  100%{transform:translate3d(var(--dx),-110vh,0);opacity:0}
+}
+
+/* accessibility / reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    scroll-behavior:auto!important;
+  }
+}
+
+
+/* ===== PROJECTORA NEON VISUAL UPGRADE 2 ===== */
+:root{
+  --p1:#9b5cff;--p2:#27d8ff;--p3:#ff4fd8;--g1:#49ffb1;
+}
+html{background:#050711}
+body{overflow-x:hidden}
+
+/* moving aurora behind the app */
+body::after{
+  content:"";position:fixed;inset:-20%;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 22%,rgba(155,92,255,.16),transparent 23%),
+    radial-gradient(circle at 82% 28%,rgba(39,216,255,.12),transparent 21%),
+    radial-gradient(circle at 50% 88%,rgba(255,79,216,.10),transparent 24%);
+  filter:blur(40px);animation:aurora 18s ease-in-out infinite alternate;
+}
+@keyframes aurora{0%{transform:translate(-3%,-1%) rotate(0deg) scale(1)}50%{transform:translate(3%,2%) rotate(4deg) scale(1.06)}100%{transform:translate(-1%,4%) rotate(-3deg) scale(1.1)}}
+
+/* neon cursor spotlight */
+#cursorGlow{position:fixed;left:0;top:0;width:330px;height:330px;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(155,92,255,.11),rgba(39,216,255,.045) 35%,transparent 70%);mix-blend-mode:screen;transition:opacity .25s;opacity:0}
+
+/* animated top status line */
+.topbar{position:relative;overflow:visible}
+.topbar::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--p1),var(--p2),var(--p3),transparent);box-shadow:0 0 12px rgba(155,92,255,.5);animation:topLine 4s linear infinite}
+@keyframes topLine{0%{background-position:-500px 0}100%{background-position:500px 0}}
+
+/* little live signal next to presentation mode */
+.mode{position:relative}
+.mode::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:7px;background:var(--g1);box-shadow:0 0 7px var(--g1),0 0 16px var(--g1);animation:liveDot 1.2s infinite}
+@keyframes liveDot{50%{opacity:.35;transform:scale(.7)}}
+
+/* sidebar decorative rail */
+.sidebar::before{content:"";position:absolute;right:-1px;top:8%;height:84%;width:1px;background:linear-gradient(180deg,transparent,var(--p1),var(--p2),transparent);box-shadow:0 0 13px rgba(155,92,255,.65)}
+.sidebar::after{content:"";position:absolute;right:-3px;top:14%;width:5px;height:55px;border-radius:10px;background:var(--p2);box-shadow:0 0 8px var(--p2),0 0 20px rgba(39,216,255,.65);animation:railScan 7s ease-in-out infinite}
+@keyframes railScan{0%,100%{top:14%}50%{top:78%}}
+
+/* nav icons/labels get a little depth */
+.nav button,.nav a{transition:transform .22s ease,box-shadow .22s ease,background .22s ease,border-color .22s ease}
+.nav button:hover,.nav a:hover{transform:translateX(4px)}
+.nav button.active,.nav a.active{transform:translateX(5px)}
+
+/* cards: glass + spotlight */
+.card,.hero,.progressBox{position:relative;overflow:hidden}
+.card::before,.hero::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 20%,rgba(155,92,255,.08),transparent 42%,rgba(39,216,255,.06),transparent 68%);transform:translateX(-60%);animation:cardSweep 8s ease-in-out infinite}
+@keyframes cardSweep{0%,55%{transform:translateX(-65%)}80%,100%{transform:translateX(65%)}}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),rgba(155,92,255,.075),transparent 60%);opacity:0;transition:opacity .25s}
+.card:hover::after{opacity:1}
+.card:hover{transform:translateY(-3px)!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+
+/* section title neon marker */
+section > h2{position:relative}
+section > h2::before{content:"//";font-size:.55em;color:var(--p2);margin-right:10px;opacity:.8;text-shadow:0 0 10px var(--p2)}
+
+/* animated step numbers */
+.step .num{position:relative;text-shadow:0 0 10px rgba(155,92,255,.55);animation:numPulse 2.8s ease-in-out infinite}
+@keyframes numPulse{50%{text-shadow:0 0 18px rgba(39,216,255,.7)}}
+
+/* progress bar becomes a reactor */
+.progressBox{position:relative}
+.progressBox::after{content:"";position:absolute;left:8px;right:8px;bottom:7px;height:1px;background:linear-gradient(90deg,transparent,var(--p2),transparent);opacity:.45;box-shadow:0 0 8px var(--p2)}
+
+/* Gantt grid glow */
+.gantt{box-shadow:0 0 30px rgba(39,216,255,.045),inset 0 0 30px rgba(155,92,255,.025)}
+.gantt td,.gantt th{transition:background .2s ease,box-shadow .2s ease}
+.gantt tr:hover td{background:rgba(39,216,255,.035);box-shadow:inset 0 0 12px rgba(39,216,255,.025)}
+
+/* money highlight */
+.money{animation:moneyPulse 3.5s ease-in-out infinite}
+@keyframes moneyPulse{50%{filter:drop-shadow(0 0 13px rgba(73,255,177,.18))}}
+
+/* quiz button/card emphasis */
+#quizCard{box-shadow:0 0 28px rgba(155,92,255,.08),inset 0 0 25px rgba(39,216,255,.025)}
+#quizCard::before{background:linear-gradient(90deg,transparent,rgba(155,92,255,.18),transparent);animation:quizSweep 4s linear infinite}
+@keyframes quizSweep{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+
+/* floating particles are brighter and varied */
+.neon-particle{width:3px;height:3px;filter:blur(.15px)}
+
+/* mobile */
+@media(max-width:800px){
+  #cursorGlow{display:none}
+  .card:hover{transform:none!important}
+}
 
 </style>
 </head>
@@ -508,5 +990,62 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <div style="position:fixed;left:18px;bottom:10px;font-size:10px;color:#69708f;opacity:.65;z-index:50">PROJECTORA • v2 + QUIZ HOST</div>
+
+<script>
+/* PROJECTORA — subtle animated neon particles */
+(function(){
+  const count = 24;
+  const colors = ['#9b5cff','#27d8ff','#c26bff','#5ff7ff','#ff4fd8'];
+  for(let i=0;i<count;i++){
+    const p=document.createElement('span');
+    p.className='neon-particle';
+    p.style.left=(Math.random()*100)+'vw';
+    p.style.top=(100+Math.random()*35)+'vh';
+    p.style.color=colors[Math.floor(Math.random()*colors.length)];
+    p.style.setProperty('--dx',((Math.random()-.5)*180)+'px');
+    p.style.setProperty('--dur',(8+Math.random()*12)+'s');
+    p.style.animationDelay=(-Math.random()*15)+'s';
+    document.body.appendChild(p);
+  }
+})();
+</script>
+
+
+<script>
+/* ===== VISUAL MICRO-INTERACTIONS ===== */
+(function(){
+  const glow=document.createElement('div'); glow.id='cursorGlow'; document.body.appendChild(glow);
+  let raf=0, mx=0, my=0;
+  window.addEventListener('pointermove',e=>{
+    mx=e.clientX; my=e.clientY;
+    if(!raf){raf=requestAnimationFrame(()=>{glow.style.left=mx+'px';glow.style.top=my+'px';glow.style.opacity='1';raf=0})}
+    const card=e.target.closest?.('.card,.hero,.progressBox');
+    if(card){const r=card.getBoundingClientRect();card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');card.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');}
+  },{passive:true});
+  window.addEventListener('pointerleave',()=>glow.style.opacity='0');
+
+  /* tiny magnetic effect for main buttons */
+  document.querySelectorAll('.cta, .nav a, .nav button').forEach(el=>{
+    el.addEventListener('pointermove',e=>{
+      if(window.innerWidth<801)return;
+      const r=el.getBoundingClientRect(), x=(e.clientX-(r.left+r.width/2))/r.width*8, y=(e.clientY-(r.top+r.height/2))/r.height*5;
+      el.style.transform=`translate(${x}px,${y}px)`;
+    });
+    el.addEventListener('pointerleave',()=>{el.style.transform='';});
+  });
+
+  /* animate numeric progress when the element is visible */
+  const progress=document.querySelector('.progress i');
+  if(progress && 'IntersectionObserver' in window){
+    const target=progress.style.width;
+    const m=(target||'0').match(/[0-9.]+/); const pct=m?parseFloat(m[0]):0;
+    progress.style.width='0%';
+    const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){
+      progress.style.transition='width 1.2s cubic-bezier(.2,.8,.2,1)'; progress.style.width=pct+'%'; io.disconnect();
+    }});io.observe(progress);
+  }
+})();
+</script>
+
 </body>
 </html>
