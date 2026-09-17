@@ -651,6 +651,59 @@ section > h2::before{content:"//";font-size:.55em;color:var(--p2);margin-right:1
 }
 
 </style>
+
+<style>
+/* ===== LEKCJA: LICZNIK POSTĘPU — LEWY DOLNY RÓG ===== */
+.progressBox{
+  position:fixed !important;
+  left:22px !important;
+  bottom:20px !important;
+  z-index:10000 !important;
+  width:190px !important;
+  margin:0 !important;
+  padding:12px 14px !important;
+  background:rgba(5,7,17,.82) !important;
+  backdrop-filter:blur(14px) saturate(130%);
+  -webkit-backdrop-filter:blur(14px) saturate(130%);
+  border:1px solid rgba(155,92,255,.42) !important;
+  border-radius:14px !important;
+  box-shadow:
+    0 0 18px rgba(155,92,255,.14),
+    0 0 45px rgba(39,216,255,.06),
+    inset 0 0 22px rgba(155,92,255,.04);
+  animation:progressHudPulse 3s ease-in-out infinite;
+}
+.progressBox::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  pointer-events:none;
+  background:linear-gradient(120deg,rgba(155,92,255,.4),transparent 40%,rgba(39,216,255,.35),transparent 75%);
+  opacity:.35;
+  filter:blur(1px);
+}
+.progressBox .progress{
+  overflow:hidden;
+  box-shadow:inset 0 0 8px rgba(0,0,0,.35);
+}
+.progressBox .progress i{
+  transition:width .65s cubic-bezier(.2,.8,.2,1) !important;
+}
+@keyframes progressHudPulse{
+  0%,100%{box-shadow:0 0 18px rgba(155,92,255,.14),0 0 45px rgba(39,216,255,.06),inset 0 0 22px rgba(155,92,255,.04)}
+  50%{box-shadow:0 0 25px rgba(155,92,255,.23),0 0 55px rgba(39,216,255,.09),inset 0 0 26px rgba(155,92,255,.06)}
+}
+@media(max-width:700px){
+  .progressBox{
+    left:12px !important;
+    bottom:12px !important;
+    width:155px !important;
+    padding:9px 11px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
