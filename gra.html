@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PROJECTORA — Gra</title>
+
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
+.wrap{max-width:900px;margin:auto;padding:28px 18px}.card{background:#151c31;border:1px solid #293453;border-radius:22px;padding:28px;box-shadow:0 15px 50px #0005}
+h1{margin:0 0 8px;font-size:32px}.muted{color:#aeb8d0}.hidden{display:none!important}
+input{width:100%;padding:15px;border-radius:12px;border:1px solid #34405f;background:#0d1426;color:#fff;font-size:17px;margin:7px 0}
+button{border:0;border-radius:12px;padding:14px 18px;font-weight:800;font-size:16px;cursor:pointer;background:#6c7cff;color:white}
+button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:10px}.row>*{flex:1}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.pill{padding:9px 13px;border-radius:999px;background:#222c49;color:#dbe2ff}
+.timer{font-size:42px;font-weight:900;text-align:center;margin:15px 0}.bar{height:10px;background:#27304a;border-radius:99px;overflow:hidden}.bar>div{height:100%;width:100%;background:#6c7cff;transition:width .1s linear}
+.question{font-size:25px;font-weight:800;margin:25px 0}.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answer{min-height:75px;text-align:left;background:#202a45;border:2px solid #34405f}.answer.correct{background:#18794e;border-color:#48e08f}.answer.wrong{background:#8b2c3b;border-color:#ff7185}
+.feedback{text-align:center;font-size:20px;font-weight:800;margin-top:15px;min-height:28px}
+.podium{display:flex;align-items:end;justify-content:center;gap:12px;height:280px;margin-top:25px}.place{width:28%;text-align:center}.block{display:flex;align-items:center;justify-content:center;border-radius:14px 14px 0 0;font-size:30px;font-weight:900;background:#27304a}.p1 .block{height:170px}.p2 .block{height:125px}.p3 .block{height:90px}
+.name{font-weight:800;margin:8px 0}.score{color:#aeb8d0}.status{text-align:center;margin-top:20px}
+@media(max-width:650px){.answers{grid-template-columns:1fr}.row{flex-direction:column}.top{align-items:flex-start}.question{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="join" class="card">
+    <h1>PROJECTORA</h1><div class="muted">Quiz — dołącz do pokoju</div>
+    <input id="code" placeholder="Kod pokoju" autocomplete="off">
+    <input id="nick" placeholder="Twój nick" maxlength="24" autocomplete="off">
+    <button id="joinBtn">DOŁĄCZ</button>
+    <div id="joinMsg" class="status muted"></div>
+  </div>
+
+  <div id="wait" class="card hidden">
+    <div class="top"><div><h1>Czekamy na start</h1><div id="hello" class="muted"></div></div><div class="pill" id="roomPill"></div></div>
+    <div class="status">Prowadzący uruchomi quiz. Nie zamykaj tej strony.</div>
+  </div>
+
+  <div id="quiz" class="card hidden">
+    <div class="top"><div class="pill" id="progress"></div><div class="pill" id="points">0 pkt</div></div>
+    <div class="timer" id="timer">15.0</div><div class="bar"><div id="timerBar"></div></div>
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div id="finished" class="card hidden">
+    <h1>Gotowe! 🎉</h1><div class="status muted">Czekamy, aż wszyscy zakończą quiz...</div>
+    <div class="status" id="waitInfo"></div>
+  </div>
+
+  <div id="podium" class="card hidden">
+    <h1 style="text-align:center">WYNIKI 🏆</h1>
+    <div class="podium" id="podiumInner"></div>
+  </div>
+</div>
+
+
+
+
+
+</body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL="https://megktvolzzqkeykzjkhe.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_qL5wS3xcDN8CbnUQ-Uvusw_zVxoBOMH";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const QUESTION_BANK=[
+{q:"Co przedstawia harmonogram projektu?",a:["Plan działań w czasie","Wyłącznie listę kosztów","Listę sponsorów","Opis pracowników"],c:0},
+{q:"Czym jest wykres Gantta?",a:["Graficznym przedstawieniem zadań w czasie","Budżetem projektu","Listą zasobów","Spisem sponsorów"],c:0},
+{q:"Co powinno uwzględniać realistyczne oszacowanie czasu?",a:["Możliwe nieprzewidziane zdarzenia","Tylko czas idealny","Wyłącznie weekendy","Tylko termin końcowy"],c:0},
+{q:"Czym są kamienie milowe?",a:["Punktami kontrolnymi projektu","Kosztami pośrednimi","Źródłami finansowania","Rodzajem zasobu"],c:0},
+{q:"Ile kamieni milowych zaleca się co najmniej wyznaczyć?",a:["Dwa — w połowie i na końcu","Jeden po każdym zadaniu","Tylko jeden na początku","Nie trzeba żadnego"],c:0},
+{q:"Co zawiera budżet projektu?",a:["Wydatki i źródła finansowania","Tylko wynagrodzenia","Tylko sponsorów","Wyłącznie materiały"],c:0},
+{q:"Który przykład jest zasobem ludzkim?",a:["Członkowie zespołu","Laptop","Dotacja","Licencja"],c:0},
+{q:"Na czym polega szacowanie bottom-up?",a:["Koszty szacuje się od poszczególnych zadań i składa w całość","Podaje się jedną kwotę bez analizy","Liczy się tylko koszty pośrednie","Pomija się zadania"],c:0},
+{q:"Który koszt jest kosztem bezpośrednim?",a:["Koszt bezpośrednio związany z wykonaniem konkretnego zadania","Ogólne koszty administracji firmy","Koszt niezwiązany z projektem","Opłata członkowska"],c:0},
+{q:"Które źródło może finansować projekt komercyjny?",a:["Budżet firmy","Wyłącznie zbiórka publiczna","Tylko składki członkowskie","Tylko darowizny"],c:0},
+{q:"Które źródło jest typowe dla projektu społecznego?",a:["Crowdfunding lub darowizny","Emisja akcji obowiązkowo","Tylko kredyt bankowy","Wyłącznie budżet firmy"],c:0},
+{q:"Dlaczego budżet projektu może się zmienić?",a:["Np. przez zmianę zakresu lub cen","Nigdy się nie zmienia","Tylko przez zmianę nicku","Wyłącznie przez zmianę grafiki"],c:0}
+];
+const $=id=>document.getElementById(id);
+let roomCode="",player=null,questions=[],pos=0,score=0,answered=false,deadline=0,timerId=null,pollId=null;
+
+function seed(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function shuffle(arr,sv){let a=arr.slice(),x=sv>>>0;for(let i=a.length-1;i>0;i--){x=(Math.imul(x,1664525)+1013904223)>>>0;let j=x%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function show(id){["join","wait","quiz","finished","podium"].forEach(x=>$(x)?.classList.toggle("hidden",x!==id))}
+function msg(t){if($("joinMsg"))$("joinMsg").textContent=t}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+if($("joinBtn"))$("joinBtn").onclick=join;
+if($("code"))$("code").onkeydown=e=>{if(e.key==="Enter")join()};
+if($("nick"))$("nick").onkeydown=e=>{if(e.key==="Enter")join()};
+
+async function join(){
+ roomCode=$("code").value.trim().toUpperCase();
+ const nick=$("nick").value.trim();
+ if(!roomCode||!nick){msg("Wpisz kod pokoju i nick.");return}
+ msg("Dołączanie...");
+ const {data:r,error:re}=await sb.from("rooms").select("code,status,current_question").eq("code",roomCode).maybeSingle();
+ if(re){msg("Błąd pokoju: "+re.message);return}
+ if(!r){msg("Nie znaleziono pokoju.");return}
+ if(r.status!=="lobby"){msg("Ten quiz już się rozpoczął.");return}
+ const {data:p,error:pe}=await sb.from("players").insert({
+   room_code:roomCode,nickname:nick,score:0,finished:false
+ }).select("id,room_code,nickname,score,finished").single();
+ if(pe){msg("Nie udało się dołączyć: "+pe.message);return}
+ player=p;$("hello")&&($("hello").textContent="Grasz jako: "+nick);$("roomPill")&&($("roomPill").textContent=roomCode);
+ show("wait");startRoomPolling();
+}
+function startRoomPolling(){clearInterval(pollId);pollId=setInterval(checkRoom,500);checkRoom()}
+async function checkRoom(){
+ const {data:r,error}=await sb.from("rooms").select("code,status,current_question").eq("code",roomCode).maybeSingle();
+ if(error||!r)return;
+ if(r.status==="playing"){clearInterval(pollId);beginQuiz()}
+ if(r.status==="finished"){clearInterval(pollId);showPodium()}
+}
+function beginQuiz(){questions=shuffle(QUESTION_BANK,seed(roomCode+":"+player.id));pos=0;score=0;show("quiz");renderQuestion()}
+function renderQuestion(){
+ if(pos>=questions.length){finishPlayer();return}
+ answered=false;if($("feedback"))$("feedback").textContent="";
+ const q=questions[pos];
+ const order=shuffle(q.a.map((text,i)=>({text,i})),seed(roomCode+":"+player.id+":"+pos+":"+q.q));
+ $("progress")&&($("progress").textContent=`Pytanie ${pos+1}/${questions.length}`);
+ $("points")&&($("points").textContent=`${score} pkt`);
+ $("question")&&($("question").textContent=q.q);
+ const box=$("answers");box.innerHTML="";
+ order.forEach(item=>{const b=document.createElement("button");b.className="answer";b.textContent=item.text;b.dataset.idx=item.i;b.onclick=()=>answer(b,item.i,q.c);box.appendChild(b)});
+ deadline=Date.now()+15000;clearInterval(timerId);timerId=setInterval(tick,100);tick();
+}
+function tick(){
+ const left=Math.max(0,deadline-Date.now());
+ if($("timer"))$("timer").textContent=(left/1000).toFixed(1);
+ if($("timerBar"))$("timerBar").style.width=(left/150)+"%";
+ if(left<=0){clearInterval(timerId);timeoutQuestion()}
+}
+async function answer(btn,index,correct){
+ if(answered)return;answered=true;clearInterval(timerId);
+ document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
+ const ok=index===correct;btn.classList.add(ok?"correct":"wrong");
+ if(!ok)document.querySelectorAll(".answer").forEach(b=>{if(Number(b.dataset.idx)===correct)b.classList.add("correct")});
+ if($("feedback"))$("feedback").textContent=ok?"✓ Dobrze! +100 pkt":"✗ Błędna odpowiedź";
+ if(ok)score+=100;if($("points"))$("points").textContent=`${score} pkt`;
+ const {error:ae}=await sb.from("answers").insert({room_code:roomCode,player_id:player.id,question_index:pos,answer_index:index,correct:ok});
+ if(ae)console.error(ae);
+ const {error:pe}=await sb.from("players").update({score}).eq("id",player.id).eq("room_code",roomCode);
+ if(pe)console.error(pe);
+ setTimeout(()=>{pos++;renderQuestion()},650);
+}
+async function timeoutQuestion(){
+ if(answered)return;answered=true;
+ document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
+ if($("feedback"))$("feedback").textContent="⏰ Czas minął!";
+ const q=questions[pos];
+ document.querySelectorAll(".answer").forEach(b=>{if(Number(b.dataset.idx)===q.c)b.classList.add("correct")});
+ const {error}=await sb.from("answers").insert({room_code:roomCode,player_id:player.id,question_index:pos,answer_index:-1,correct:false});
+ if(error)console.error(error);
+ setTimeout(()=>{pos++;renderQuestion()},300);
+}
+async function finishPlayer(){
+ clearInterval(timerId);show("finished");
+ const {error}=await sb.from("players").update({finished:true,finished_at:new Date().toISOString(),score})
+   .eq("id",player.id).eq("room_code",roomCode);
+ if(error){$("waitInfo")&&($("waitInfo").textContent="Błąd zapisu ukończenia: "+error.message);return}
+ clearInterval(pollId);pollId=setInterval(checkFinished,500);checkFinished();
+}
+async function checkFinished(){
+ const {data:r}=await sb.from("rooms").select("code,status").eq("code",roomCode).maybeSingle();
+ if(r&&r.status==="finished"){clearInterval(pollId);showPodium();return}
+ const {data:ps,error}=await sb.from("players").select("id,finished").eq("room_code",roomCode);
+ if(!error&&ps&&$("waitInfo"))$("waitInfo").textContent=`${ps.filter(x=>x.finished).length}/${ps.length} osób ukończyło quiz.`;
+}
+async function showPodium(){
+ const {data:ps}=await sb.from("players").select("nickname,score").eq("room_code",roomCode).order("score",{ascending:false}).limit(3);
+ show("podium");const box=$("podiumInner");if(!box)return;box.innerHTML="";
+ const labels=["🥇","🥈","🥉"],classes=["p1","p2","p3"];
+ (ps||[]).forEach((p,i)=>{const d=document.createElement("div");d.className="place "+classes[i];d.innerHTML=`<div class="name">${labels[i]} ${esc(p.nickname)}</div><div class="block">${i+1}</div><div class="score">${p.score||0} pkt</div>`;box.appendChild(d)});
+}
+</script>
+
+</body></html>

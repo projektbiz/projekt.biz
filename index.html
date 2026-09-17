@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECTORA — Zarządzanie projektem</title>
+<style>
+:root{
+  --bg:#080b14;--panel:#101625;--panel2:#151d2e;--text:#f4f7ff;--muted:#9aa6bd;
+  --purple:#8b5cf6;--blue:#38bdf8;--green:#34d399;--orange:#f59e0b;--red:#fb7185;
+  --border:rgba(255,255,255,.09);--shadow:0 20px 60px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 20% 0%,#17213a 0,#080b14 35%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button{font:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:255px;background:rgba(8,11,20,.92);border-right:1px solid var(--border);padding:25px 17px;z-index:10;backdrop-filter:blur(15px)}
+.logo{font-size:22px;font-weight:900;letter-spacing:.08em;margin:5px 10px 5px}
+.logo span{color:var(--purple)} .tag{font-size:11px;color:var(--muted);margin:0 10px 28px}
+.nav-title{font-size:10px;color:#69758c;letter-spacing:.16em;text-transform:uppercase;margin:20px 10px 8px}
+.nav button,.nav a{display:block;width:100%;text-align:left;background:transparent;border:0;color:#b8c2d6;padding:11px 12px;border-radius:11px;cursor:pointer;transition:.2s;text-decoration:none;font:inherit}
+.nav button:hover,.nav button.active,.nav a:hover,.nav a.active{background:#171f32;color:white;transform:translateX(2px)}
+.nav button.active,.nav a.active{box-shadow:inset 3px 0 var(--purple)}
+.progressBox{position:absolute;left:17px;right:17px;bottom:22px;padding:15px;background:var(--panel);border:1px solid var(--border);border-radius:15px}
+.progressTop{display:flex;justify-content:space-between;font-size:12px;margin-bottom:9px}
+.progress{height:7px;background:#20283a;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--blue));transition:.5s}
+.main{margin-left:255px;width:calc(100% - 255px);padding:32px 5vw 50px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:35px}
+.crumb{color:var(--muted);font-size:13px}.mode{border:1px solid var(--border);background:var(--panel);color:#cbd5e1;padding:8px 12px;border-radius:9px}
+.section{display:none;animation:fade .35s ease}.section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.hero{min-height:68vh;display:grid;place-items:center;text-align:center;padding:40px}
+.badge{display:inline-flex;padding:7px 11px;border:1px solid rgba(139,92,246,.35);background:rgba(139,92,246,.1);border-radius:99px;color:#c4b5fd;font-size:12px}
+h1{font-size:clamp(44px,7vw,84px);line-height:.95;margin:18px 0 16px;letter-spacing:-.06em}
+.gradient{background:linear-gradient(100deg,#fff,var(--blue),#c4b5fd);-webkit-background-clip:text;color:transparent}
+h2{font-size:38px;margin:0 0 10px;letter-spacing:-.04em} h3{margin:0 0 8px} p{line-height:1.65;color:#c1cadd}
+.lead{max-width:700px;margin:0 auto 28px;font-size:17px;color:#aeb9cc}
+.quiz-launch{vertical-align:middle}.nav a{box-sizing:border-box}.cta{border:0;background:linear-gradient(100deg,var(--purple),#5b8cff);color:#fff;padding:13px 19px;border-radius:12px;font-weight:800;cursor:pointer;box-shadow:0 10px 35px rgba(139,92,246,.25)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:25px}
+.grid4{grid-template-columns:repeat(4,1fr)}
+.card{background:linear-gradient(145deg,rgba(21,29,46,.95),rgba(13,18,31,.95));border:1px solid var(--border);border-radius:17px;padding:21px;box-shadow:var(--shadow)}
+.card .icon{font-size:26px;margin-bottom:13px}.muted{color:var(--muted);font-size:13px}
+.step{display:flex;gap:14px;align-items:flex-start}.num{min-width:30px;height:30px;border-radius:9px;background:#202a41;display:grid;place-items:center;color:#c4b5fd;font-weight:800}
+.callout{margin-top:22px;padding:18px 20px;border-left:3px solid var(--purple);background:rgba(139,92,246,.08);border-radius:0 12px 12px 0}
+.question{margin-top:22px;padding:20px;border:1px dashed #43506b;border-radius:15px;background:#0e1421}
+.question b{color:#fff}.answer{margin-top:10px;color:var(--green);display:none}.answer.show{display:block}
+.gantt{margin-top:24px;overflow:auto}.gantt table{border-collapse:collapse;min-width:780px;width:100%}.gantt th,.gantt td{border-bottom:1px solid var(--border);padding:12px 7px;text-align:center;font-size:12px}.gantt th:first-child,.gantt td:first-child{text-align:left;min-width:170px}.bar{height:23px;border-radius:7px;background:linear-gradient(90deg,var(--purple),var(--blue));cursor:pointer}.milestone{color:var(--orange);font-size:22px}
+.timeline{display:flex;gap:0;margin:32px 0;position:relative}.timeline:before{content:"";position:absolute;top:20px;left:5%;right:5%;height:2px;background:#303a50}.mile{flex:1;text-align:center;position:relative}.dot{width:40px;height:40px;border-radius:50%;margin:0 auto 13px;display:grid;place-items:center;background:#202a41;border:1px solid #49566e;position:relative;z-index:1}.mile.major .dot{background:rgba(139,92,246,.22);border-color:var(--purple);box-shadow:0 0 25px rgba(139,92,246,.3)}
+.money{font-size:52px;font-weight:900;letter-spacing:-.05em}.cost{margin:12px 0}.costLine{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px}.costBar{height:8px;background:#222c40;border-radius:99px;overflow:hidden}.costBar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px}
+.choiceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.choice{background:#131b2b;border:1px solid var(--border);color:white;padding:16px;border-radius:12px;cursor:pointer;text-align:left}.choice:hover{border-color:#64748b;transform:translateY(-2px)}.feedback{margin-top:14px;padding:13px;border-radius:10px;background:#0c1320;display:none}.feedback.show{display:block}
+.quizQ{font-size:21px;margin:20px 0}.quizOption{width:100%;text-align:left;background:#131b2b;color:#e7edf8;border:1px solid var(--border);padding:14px;border-radius:11px;margin:7px 0;cursor:pointer}.quizOption:hover{border-color:var(--blue)}.quizOption.correct{border-color:var(--green);background:rgba(52,211,153,.1)}.quizOption.wrong{border-color:var(--red);background:rgba(251,113,133,.1)}.score{font-size:52px;font-weight:900}
+.footerNav{display:flex;justify-content:space-between;margin-top:35px}.next,.prev{border:1px solid var(--border);background:var(--panel);color:#d8e0ee;padding:11px 16px;border-radius:10px;cursor:pointer}.next:hover,.prev:hover{background:#182237}
+.smallcaps{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#74819a}
+@media(max-width:900px){.sidebar{width:210px}.main{margin-left:210px;width:calc(100% - 210px)}.grid,.grid4,.choiceGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.sidebar{position:static;width:100%;height:auto}.progressBox{position:static;margin-top:20px}.app{display:block}.main{margin:0;width:100%;padding:20px}.grid,.grid4,.choiceGrid{grid-template-columns:1fr}.timeline{display:block}.timeline:before{display:none}.mile{margin:22px}}
+
+/* ===== PROJECTORA ENHANCED UI ===== */
+:root{
+  --glow:#7c5cff;
+  --glow2:#24c8ff;
+  --panel:rgba(20,24,45,.78);
+  --line:rgba(255,255,255,.09);
+}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(circle at 10% 10%, rgba(124,92,255,.13), transparent 28%),
+    radial-gradient(circle at 90% 20%, rgba(36,200,255,.09), transparent 26%),
+    #080b18;
+  overflow-x:hidden;
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.65),transparent 90%);
+}
+.sidebar{
+  backdrop-filter:blur(18px);
+  background:rgba(8,11,24,.78)!important;
+  border-right:1px solid var(--line)!important;
+}
+.logo{
+  text-shadow:0 0 24px rgba(124,92,255,.45);
+  letter-spacing:.08em;
+}
+.nav a{transition:transform .22s ease,background .22s ease,box-shadow .22s ease,color .22s ease}
+.nav a:hover{transform:translateX(4px);box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.nav a.active{box-shadow:inset 3px 0 var(--glow),0 8px 30px rgba(124,92,255,.12)}
+main{animation:pageIn .7s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+section{scroll-margin-top:24px}
+.card,.hero,.quiz-card,.scenario,.budget-card,.resource-card,.milestone-card{
+  border:1px solid var(--line)!important;
+  background:linear-gradient(145deg,rgba(25,30,55,.84),rgba(13,17,34,.78))!important;
+  box-shadow:0 14px 45px rgba(0,0,0,.18);
+  transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease;
+}
+.card:hover,.budget-card:hover,.resource-card:hover,.milestone-card:hover,.scenario:hover{
+  transform:translateY(-5px);
+  border-color:rgba(124,92,255,.32)!important;
+  box-shadow:0 20px 55px rgba(0,0,0,.26),0 0 35px rgba(124,92,255,.06);
+}
+.hero{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 82% 25%,rgba(36,200,255,.13),transparent 24%),
+    radial-gradient(circle at 25% 0%,rgba(124,92,255,.20),transparent 35%),
+    linear-gradient(135deg,rgba(30,34,68,.94),rgba(13,17,35,.96))!important;
+}
+.hero:after{
+  content:"";position:absolute;width:280px;height:280px;border-radius:50%;
+  right:-100px;bottom:-150px;border:1px solid rgba(124,92,255,.28);
+  box-shadow:0 0 80px rgba(124,92,255,.08);
+  animation:floatOrb 7s ease-in-out infinite;
+}
+@keyframes floatOrb{50%{transform:translate(-25px,-25px) scale(1.08)}}
+h1,h2,h3{letter-spacing:-.02em}
+.badge,.tag,.pill{transition:transform .2s ease,box-shadow .2s ease}
+.badge:hover,.tag:hover,.pill:hover{transform:scale(1.04);box-shadow:0 0 18px rgba(124,92,255,.15)}
+.progress-fill,.bar,.gantt-bar{
+  background:linear-gradient(90deg,var(--glow),var(--glow2))!important;
+  box-shadow:0 0 18px rgba(124,92,255,.24);
+}
+.gantt-bar{animation:growBar 1.1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes growBar{from{width:0!important;opacity:.2}to{opacity:1}}
+.gantt-row,.timeline-item,.quiz-option,.scenario button{
+  transition:all .22s ease;
+}
+.gantt-row:hover{background:rgba(124,92,255,.055);transform:translateX(2px)}
+.timeline-item:hover{transform:translateX(5px)}
+.quiz-option:hover,.scenario button:hover{
+  transform:translateY(-2px);
+  border-color:rgba(124,92,255,.45)!important;
+  box-shadow:0 8px 24px rgba(124,92,255,.10);
+}
+button,.btn{
+  transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+}
+button:hover,.btn:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 10px 28px rgba(124,92,255,.15)}
+button:active,.btn:active{transform:translateY(0) scale(.98)}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+.count-up{font-variant-numeric:tabular-nums}
+.toast{
+  position:fixed;right:24px;bottom:24px;z-index:1000;
+  padding:14px 18px;border-radius:14px;
+  background:rgba(19,24,45,.94);border:1px solid rgba(124,92,255,.35);
+  box-shadow:0 16px 45px rgba(0,0,0,.35);
+  backdrop-filter:blur(16px);color:#fff;
+  animation:toastIn .35s ease both;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(15px) scale(.96)}to{opacity:1;transform:none}}
+.confetti{
+  position:fixed;top:-12px;width:8px;height:14px;z-index:9999;
+  animation:fall 1.8s linear forwards;pointer-events:none;
+}
+@keyframes fall{to{transform:translate3d(var(--x),110vh,0) rotate(720deg);opacity:0}}
+.section-kicker{
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;
+  color:#aab2d5;font-size:.78rem;text-transform:uppercase;letter-spacing:.13em
+}
+.info-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px
+}
+.info-mini{padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025)}
+.info-mini strong{display:block;margin-bottom:6px}
+@media(max-width:900px){.info-grid{grid-template-columns:1fr}.sidebar{position:relative;width:100%;height:auto}.main{margin-left:0!important}.quiz-launch{margin-left:0!important;margin-top:10px}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo"><span>P</span> PROJECTORA</div>
+  <div class="tag">Interaktywna lekcja zarządzania projektami</div>
+  <nav class="nav">
+    <div class="nav-title">Lekcja</div>
+    <button data-go="start" class="active">🏠 Start</button>
+    <button data-go="harmonogram">⏱️ Harmonogram</button>
+    <button data-go="gantt">📊 Wykres Gantta</button>
+    <button data-go="milestones">🏁 Kamienie milowe</button>
+    <div class="nav-title">Finanse</div>
+    <button data-go="budget">💰 Budżet</button>
+    <button data-go="resources">📦 Zasoby</button>
+    <button data-go="funding">💳 Finansowanie</button>
+    <div class="nav-title">Interakcja</div>
+    <button data-go="situations">⚠️ Sytuacje</button>
+    <a href="host.html" title="Otwórz panel prowadzącego i utwórz nowy pokój">🎮 Quiz</a>
+  </nav>
+  <div class="progressBox">
+    <div class="progressTop"><span>Postęp lekcji</span><b id="progressText">0%</b></div>
+    <div class="progress"><i id="progressBar"></i></div>
+  </div>
+</aside>
+
+<main class="main">
+<div class="topbar"><div class="crumb" id="crumb">PROJECTORA / START</div><div class="mode">● TRYB PREZENTACJI</div></div>
+
+<section id="start" class="section active">
+ <div class="hero">
+  <div>
+   <span class="badge">INTERAKTYWNA LEKCJA • 40 MINUT</span>
+   <h1><span class="gradient">PROJECTORA</span></h1>
+   <p class="lead">Od pomysłu do realizacji — poznaj harmonogram, wykres Gantta, kamienie milowe, budżet, zasoby i źródła finansowania projektu.</p>
+   <button class="cta" onclick="go('harmonogram')">▶ ROZPOCZNIJ LEKCJĘ</button>
+    <a href="host.html" class="cta quiz-launch" style="display:inline-block;text-decoration:none;margin-left:10px;background:linear-gradient(100deg,#16a34a,#22c55e)">🎮 URUCHOM QUIZ KLASOWY</a>
+   <div class="grid">
+    <div class="card"><div class="icon">⏱️</div><h3>CZAS</h3><p class="muted">Co i kiedy należy wykonać?</p></div>
+    <div class="card"><div class="icon">💰</div><h3>PIENIĄDZE</h3><p class="muted">Jak zaplanować wydatki?</p></div>
+    <div class="card"><div class="icon">👥</div><h3>ZASOBY</h3><p class="muted">Czego potrzebujemy do realizacji?</p></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="harmonogram" class="section">
+ <span class="smallcaps">01 / PODSTAWY</span><h2>⏱️ Czym jest harmonogram?</h2>
+<div class="info-grid reveal">
+  <div class="info-mini"><strong>📌 Po co?</strong><span>Harmonogram pokazuje, jakie zadania trzeba wykonać i kiedy powinny zostać zrealizowane.</span></div>
+  <div class="info-mini"><strong>⏳ Realny czas</strong><span>Przy szacowaniu czasu warto uwzględnić także możliwe nieprzewidziane zdarzenia.</span></div>
+  <div class="info-mini"><strong>🔗 Zależności</strong><span>Zadania należy uporządkować tak, aby było wiadomo, które mogą rozpocząć się dopiero po innych.</span></div>
+</div>
+
+ <p>Harmonogram projektu to chronologiczny plan działania — określa, <b>co i kiedy</b> należy wykonać, aby krok po kroku zrealizować cały projekt.</p>
+ <div class="grid">
+  <div class="card step"><div class="num">01</div><div><h3>STRUKTURA PRAC</h3><p class="muted">Określ, jakie zadania trzeba wykonać.</p></div></div>
+  <div class="card step"><div class="num">02</div><div><h3>REALNY CZAS</h3><p class="muted">Oszacuj czas, uwzględniając nieprzewidziane okoliczności.</p></div></div>
+  <div class="card step"><div class="num">03</div><div><h3>ZALEŻNOŚCI</h3><p class="muted">Ustal kolejność — jedno zadanie może zależeć od zakończenia innego.</p></div></div>
+ </div>
+ <div class="callout"><b>💡 Po co?</b><br>Harmonogram pomaga zarządzać czasem realizacji działań, kontrolować wykonanie zadań i sterować projektem.</div>
+ <div class="question"><b>🎤 PYTANIE DO KLASY:</b> Co może się stać, jeśli zadania w projekcie wykonujemy w przypadkowej kolejności?<div class="answer" id="a1">➡️ Warto wskazać, że zadania mogą być od siebie zależne, dlatego kolejność i terminy trzeba zaplanować.</div><button class="next" style="margin-top:12px" onclick="showAnswer('a1')">Pokaż odpowiedź / wyjaśnienie</button></div>
+ <div class="footerNav"><span></span><button class="next" onclick="go('gantt')">Następnie: Wykres Gantta →</button></div>
+</section>
+
+<section id="gantt" class="section">
+ <span class="smallcaps">02 / HARMONOGRAM</span><h2>📊 Wykres Gantta</h2>
+ <p>To rodzaj kalendarza: <b>wiersze</b> pokazują zadania, a <b>kolumny</b> — konkretne dni, tygodnie lub daty.</p>
+ <div class="card gantt"><table><tr><th>Zadanie</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr>
+ <tr><td>Analiza rynku</td><td colspan="3"><div class="bar" title="Analiza rynku — 3 tygodnie"></div></td><td colspan="7"></td></tr>
+ <tr><td>Projekt aplikacji</td><td></td><td></td><td><div class="bar"></div></td><td colspan="2"><div class="bar"></div></td><td colspan="5"></td></tr>
+ <tr><td>Programowanie</td><td colspan="4"></td><td colspan="4"><div class="bar"></div></td><td colspan="2"></td></tr>
+ <tr><td>Testy</td><td colspan="7"></td><td colspan="2"><div class="bar"></div></td><td></td></tr>
+ <tr><td>Premiera</td><td colspan="9"></td><td class="milestone">◆</td></tr></table></div>
+ <div class="grid">
+  <div class="card"><h3>OŚ CZYNNOŚCI</h3><p class="muted">Wiersze = zadania do wykonania.</p></div>
+  <div class="card"><h3>OŚ CZASU</h3><p class="muted">Kolumny = dni, tygodnie lub daty.</p></div>
+  <div class="card"><h3>KONTROLA</h3><p class="muted">Wykres pomaga oceniać postęp realizacji.</p></div>
+ </div>
+ <div class="question"><b>🎤 PYTANIE:</b> Co znajduje się na osi poziomej, a co na pionowej?<div class="answer" id="a2">➡️ Poziomo: czas. Pionowo: zadania/czynności.</div><button class="next" style="margin-top:12px" onclick="showAnswer('a2')">Sprawdź</button></div>
+ <div class="footerNav"><button class="prev" onclick="go('harmonogram')">← Wróć</button><button class="next" onclick="go('milestones')">Kamienie milowe →</button></div>
+</section>
+
+<section id="milestones" class="section">
+ <span class="smallcaps">03 / KONTROLA</span><h2>🏁 Kamienie milowe</h2>
+ <p>Kamienie milowe to <b>punkty kontrolne</b>, ważne ze względu na znaczenie częściowych rezultatów dla kolejnych etapów projektu.</p>
+ <div class="timeline">
+  <div class="mile"><div class="dot">1</div><b>START</b><p class="muted">Rozpoczęcie projektu</p></div>
+  <div class="mile"><div class="dot">2</div><b>ANALIZA</b><p class="muted">Przygotowanie założeń</p></div>
+  <div class="mile major"><div class="dot">◆</div><b>KAMIEŃ #1</b><p class="muted">Kontrola w trakcie projektu</p></div>
+  <div class="mile"><div class="dot">4</div><b>TESTY</b><p class="muted">Sprawdzenie rezultatów</p></div>
+  <div class="mile major"><div class="dot">◆</div><b>KAMIEŃ #2</b><p class="muted">Rozliczenie i zakończenie</p></div>
+ </div>
+ <div class="callout"><b>Ważne:</b> materiał wskazuje, że powinny być co najmniej dwa takie punkty — jeden w środku projektu i drugi na jego zakończenie. Nie należy ustawiać kamienia milowego po każdym zadaniu.</div>
+ <div class="question"><b>🎤 PYTANIE:</b> Czy po każdym pojedynczym zadaniu powinniśmy robić kamień milowy?<div class="answer" id="a3">➡️ Nie. Zbyt duża liczba kamieni milowych zwiększa nakład pracy związany z kontrolą i raportowaniem.</div><button class="next" style="margin-top:12px" onclick="showAnswer('a3')">Sprawdź</button></div>
+ <div class="footerNav"><button class="prev" onclick="go('gantt')">← Wróć</button><button class="next" onclick="go('budget')">Przejdź do budżetu →</button></div>
+</section>
+
+<section id="budget" class="section">
+ <span class="smallcaps">04 / FINANSE</span><h2>💰 Budżet projektu</h2>
+<div class="info-grid reveal">
+  <div class="info-mini"><strong>📋 Co zawiera budżet?</strong><span>Planowane wydatki oraz źródła finansowania projektu.</span></div>
+  <div class="info-mini"><strong>🎯 Po co?</strong><span>Budżet pozwala monitorować koszty i sprawdzać, czy projekt mieści się w założeniach finansowych.</span></div>
+  <div class="info-mini"><strong>🔄 Zmiany</strong><span>Budżet może się zmienić np. przez zmianę zakresu projektu, cen lub wycofanie sponsora.</span></div>
+</div>
+
+ <p>Budżet to lista wydatków projektu wraz ze wskazaniem źródeł ich finansowania. Jest też narzędziem kontroli przebiegu projektu.</p>
+ <div class="card" style="margin-top:22px"><div class="smallcaps">Przykładowy projekt</div><div class="money">50 000 zł</div>
+  <div class="cost"><div class="costLine"><span>👨‍💻 Wynagrodzenia</span><b>20 000 zł</b></div><div class="costBar"><i style="width:40%"></i></div></div>
+  <div class="cost"><div class="costLine"><span>💻 Sprzęt</span><b>8 000 zł</b></div><div class="costBar"><i style="width:16%"></i></div></div>
+  <div class="cost"><div class="costLine"><span>📜 Licencje</span><b>5 000 zł</b></div><div class="costBar"><i style="width:10%"></i></div></div>
+  <div class="cost"><div class="costLine"><span>🤝 Usługi</span><b>7 000 zł</b></div><div class="costBar"><i style="width:14%"></i></div></div>
+  <div class="cost"><div class="costLine"><span>📢 Marketing</span><b>6 000 zł</b></div><div class="costBar"><i style="width:12%"></i></div></div>
+  <div class="cost"><div class="costLine"><span>🛟 Rezerwa</span><b>4 000 zł</b></div><div class="costBar"><i style="width:8%"></i></div></div>
+ </div>
+ <div class="grid">
+  <div class="card"><h3>Koszty bezpośrednie</h3><p class="muted">Wprost związane z poszczególnymi zadaniami projektu.</p></div>
+  <div class="card"><h3>Koszty pośrednie</h3><p class="muted">Trudno przypisać je do konkretnych zadań, np. część kosztów energii w biurze.</p></div>
+  <div class="card"><h3>Kontrola</h3><p class="muted">Wcześniej założone koszty mogą się zmienić.</p></div>
+ </div>
+ <div class="question"><b>🎤 PYTANIE:</b> Czy prąd w biurze całego zespołu łatwo przypisać do jednego konkretnego zadania?<div class="answer" id="a4">➡️ Nie — to przykład kosztu pośredniego, trudnego do przypisania do konkretnego zadania.</div><button class="next" style="margin-top:12px" onclick="showAnswer('a4')">Sprawdź</button></div>
+ <div class="footerNav"><button class="prev" onclick="go('milestones')">← Wróć</button><button class="next" onclick="go('resources')">Zasoby →</button></div>
+</section>
+
+<section id="resources" class="section">
+ <span class="smallcaps">05 / ZASOBY</span><h2>📦 Zasoby projektu</h2>
+<div class="info-grid reveal">
+  <div class="info-mini"><strong>👥 Ludzkie</strong><span>Osoby i ich kompetencje potrzebne do realizacji zadań.</span></div>
+  <div class="info-mini"><strong>🧰 Materialne</strong><span>Sprzęt, materiały i inne fizyczne elementy wykorzystywane w projekcie.</span></div>
+  <div class="info-mini"><strong>💡 Niematerialne</strong><span>Licencje, wiedza, informacje i inne zasoby niemające postaci fizycznej.</span></div>
+</div>
+
+ <p>Do realizacji projektu potrzebne są zasoby. Materiał dzieli je na cztery podstawowe grupy.</p>
+ <div class="grid grid4">
+  <div class="card"><div class="icon">👥</div><h3>LUDZKIE</h3><p class="muted">Lider, wykonawcy, zewnętrzni eksperci.</p></div>
+  <div class="card"><div class="icon">💻</div><h3>MATERIALNE</h3><p class="muted">Maszyny, urządzenia, komputery, materiały, energia.</p></div>
+  <div class="card"><div class="icon">🧠</div><h3>NIEMATERIALNE</h3><p class="muted">Licencje, prawa, informacje, usługi podwykonawców.</p></div>
+  <div class="card"><div class="icon">💰</div><h3>FINANSOWE</h3><p class="muted">Środki finansowe m.in. od organizacji finansującej i sponsorów.</p></div>
+ </div>
+ <div class="card" style="margin-top:20px"><h3>🎮 Mini-gra: dopasuj zasób</h3><p class="muted">Kliknij kategorię, do której należy podany element.</p>
+  <div id="resourceGame" class="question" style="display:block;margin-top:10px"><b id="resourceItem">PROGRAMISTA</b>
+   <div class="choiceGrid"><button class="choice" onclick="resourceAnswer('LUDZKIE')">👥 LUDZKIE</button><button class="choice" onclick="resourceAnswer('MATERIALNE')">💻 MATERIALNE</button><button class="choice" onclick="resourceAnswer('NIEMATERIALNE')">🧠 NIEMATERIALNE</button><button class="choice" onclick="resourceAnswer('FINANSOWE')">💰 FINANSOWE</button></div>
+   <div class="feedback" id="resourceFeedback"></div>
+  </div>
+ </div>
+ <div class="footerNav"><button class="prev" onclick="go('budget')">← Wróć</button><button class="next" onclick="go('funding')">Finansowanie →</button></div>
+</section>
+
+<section id="funding" class="section">
+ <span class="smallcaps">06 / FINANSE</span><h2>💳 Źródła finansowania</h2>
+ <p>Źródła finansowania zależą od rodzaju projektu. Inaczej mogą wyglądać w projekcie komercyjnym, a inaczej w społecznym.</p>
+ <div class="grid">
+  <div class="card"><h3>💼 Projekt komercyjny</h3><p>Budżet firmy, sponsor zewnętrzny, emisja akcji lub obligacji, kredyt bankowy, granty i bezzwrotne pożyczki.</p></div>
+  <div class="card"><h3>❤️ Projekt społeczny</h3><p>Zbiórki publiczne (crowdfunding), darowizny, składki członkowskie, granty z programów UE.</p></div>
+  <div class="card"><h3>🎯 Dlaczego planować wcześniej?</h3><p>Znajomość możliwych źródeł pozwala lepiej ustalić potrzebne środki i ewentualnie skorygować koszty.</p></div>
+ </div>
+ <div class="question"><b>🎤 PYTANIE:</b> Czy każdy projekt może być finansowany dokładnie w taki sam sposób?<div class="answer" id="a5">➡️ Nie. Sposób finansowania zależy m.in. od rodzaju projektu — komercyjnego lub społecznego.</div><button class="next" style="margin-top:12px" onclick="showAnswer('a5')">Sprawdź</button></div>
+ <div class="footerNav"><button class="prev" onclick="go('resources')">← Wróć</button><button class="next" onclick="go('situations')">Sytuacje →</button></div>
+</section>
+
+<section id="situations" class="section">
+ <span class="smallcaps">07 / PRAKTYKA</span><h2>⚠️ Co może pójść nie tak?</h2>
+ <p>Harmonogram i budżet nie są niezmienne. W trakcie planowania lub realizacji mogą pojawić się zdarzenia wymagające modyfikacji projektu.</p>
+ <div class="card">
+  <div class="smallcaps">SYTUACJA #1</div><h3>🚨 Sponsor wycofał się z projektu.</h3><p>Projekt stracił 10 000 zł. Co robisz?</p>
+  <div class="choiceGrid">
+   <button class="choice" onclick="situation('budzet')"><b>A</b><br>Zmieniam budżet.</button>
+   <button class="choice" onclick="situation('finansowanie')"><b>B</b><br>Szukam dodatkowego finansowania.</button>
+   <button class="choice" onclick="situation('zakres')"><b>C</b><br>Zmieniam zakres projektu.</button>
+  </div><div class="feedback" id="sit1"></div>
+ </div>
+ <div class="card" style="margin-top:18px"><div class="smallcaps">SYTUACJA #2</div><h3>⏳ Zadanie zajmie dwa tygodnie dłużej.</h3>
+  <div class="grid">
+   <div class="card"><h3>HARMONOGRAM</h3><p class="muted">🔴 Opóźnienie</p></div>
+   <div class="card"><h3>BUDŻET</h3><p class="muted">🟠 Możliwa zmiana</p></div>
+   <div class="card"><h3>KOLEJNE ZADANIA</h3><p class="muted">🟠 Możliwe przesunięcie</p></div>
+  </div>
+  <div class="callout"><b>Wniosek:</b> harmonogram może być modyfikowany podczas dalszego planowania oraz podczas realizacji projektu.</div>
+ </div>
+ <div class="footerNav"><button class="prev" onclick="go('funding')">← Wróć</button><a class="next" href="host.html" style="text-decoration:none;display:inline-block">Finał: Quiz →</a></div>
+</section>
+
+<section id="quiz" class="section">
+ <span class="smallcaps">08 / FINAŁ</span><h2>🎮 Sprawdźmy wiedzę</h2>
+ <p>5 pytań na zakończenie. Odpowiedz razem z klasą.</p>
+ <div class="card" id="quizCard">
+  <div class="smallcaps" id="qCounter">PYTANIE 1 / 5</div>
+  <div class="quizQ" id="quizQuestion"></div>
+  <div id="quizOptions"></div>
+  <div class="feedback" id="quizFeedback"></div>
+ </div>
+ <div id="quizResult" class="card" style="display:none;text-align:center;margin-top:18px">
+  <div class="smallcaps">PROJEKT ZAKOŃCZONY</div><div class="score" id="scoreText"></div>
+  <p>Przeszliśmy przez harmonogram, wykres Gantta, kamienie milowe, budżet, zasoby i finansowanie.</p>
+  <button class="cta" onclick="go('start')">↺ ZACZNIJ OD NOWA</button>
+ </div>
+</section>
+
+<section class="card reveal" style="margin-top:28px">
+  <div class="section-kicker">🧠 Szybka ściąga przed quizem</div>
+  <h3>Sześć rzeczy, które warto zapamiętać</h3>
+  <ol style="line-height:1.9;color:#cbd1e8;padding-left:22px">
+    <li>Harmonogram porządkuje zadania w czasie.</li>
+    <li>Wykres Gantta pokazuje zadania na osi czasu.</li>
+    <li>Kamień milowy to ważny punkt kontrolny projektu.</li>
+    <li>Budżet obejmuje wydatki i źródła finansowania.</li>
+    <li>Zasoby mogą być ludzkie, materialne, niematerialne i finansowe.</li>
+    <li>Budżet i harmonogram mogą być aktualizowane, gdy zmieniają się warunki projektu.</li>
+  </ol>
+</section>
+
+</main>
+</div>
+
+<script>
+const order=['start','harmonogram','gantt','milestones','budget','resources','funding','situations','quiz'];
+const names={start:'START',harmonogram:'HARMONOGRAM',gantt:'WYKRES GANTTA',milestones:'KAMIENIE MILOWE',budget:'BUDŻET',resources:'ZASOBY',funding:'FINANSOWANIE',situations:'SYTUACJE',quiz:'QUIZ'};
+function go(id){
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));
+ document.getElementById('crumb').textContent='PROJECTORA / '+names[id];
+ const pct=Math.round(order.indexOf(id)/(order.length-1)*100);
+ document.getElementById('progressBar').style.width=pct+'%';document.getElementById('progressText').textContent=pct+'%';
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+function showAnswer(id){document.getElementById(id).classList.add('show')}
+const resourceItems=[['PROGRAMISTA','LUDZKIE'],['LAPTOP','MATERIALNE'],['LICENCJA','NIEMATERIALNE'],['SPONSOR','FINANSOWE']];
+let ri=0;
+function resourceAnswer(ans){
+ const correct=resourceItems[ri][1], f=document.getElementById('resourceFeedback');
+ if(ans===correct){f.innerHTML='✅ Dobrze! '+resourceItems[ri][0]+' to zasób '+correct.toLowerCase()+'.';f.style.color='var(--green)';ri=(ri+1)%resourceItems.length;document.getElementById('resourceItem').textContent=resourceItems[ri][0]}
+ else{f.innerHTML='❌ Spróbuj jeszcze raz.';f.style.color='var(--red)'}
+ f.classList.add('show');
+}
+function situation(choice){
+ const f=document.getElementById('sit1');f.classList.add('show');
+ const text={budzet:'Plan trzeba ponownie przeliczyć — zmiana finansowania może wymagać korekty budżetu.',finansowanie:'Można poszukać dodatkowego źródła finansowania, np. innego sponsora lub grantu, zależnie od rodzaju projektu.',zakres:'Zmiana zakresu może być sposobem dopasowania projektu do nowych możliwości finansowych.'};
+ f.innerHTML='💡 '+text[choice];
+}
+const quiz=[
+ ['Co pokazuje wykres Gantta?',['Zyski firmy','Zadania w czasie','Strukturę pracowników'],1],
+ ['Czym jest kamień milowy?',['Rodzajem kosztu','Punktem kontrolnym projektu','Źródłem finansowania'],1],
+ ['Który element jest zasobem niematerialnym?',['Laptop','Programista','Licencja'],2],
+ ['Czym jest budżet projektu?',['Listą wydatków i źródeł ich finansowania','Listą pracowników','Harmonogramem'],0],
+ ['Czy harmonogram może zostać zmieniony podczas realizacji?',['Tak','Nie','Tylko na początku'],0]
+];
+let qi=0,score=0,answered=false;
+function loadQuiz(){
+ answered=false;const q=quiz[qi];document.getElementById('qCounter').textContent=`PYTANIE ${qi+1} / ${quiz.length}`;
+ document.getElementById('quizQuestion').textContent=q[0];const box=document.getElementById('quizOptions');box.innerHTML='';
+ q[1].forEach((x,i)=>{const b=document.createElement('button');b.className='quizOption';b.textContent=String.fromCharCode(65+i)+'. '+x;b.onclick=()=>answerQuiz(i,b);box.appendChild(b)});
+ document.getElementById('quizFeedback').className='feedback';document.getElementById('quizFeedback').textContent='';
+}
+function answerQuiz(i,b){
+ if(answered)return;answered=true;const q=quiz[qi], f=document.getElementById('quizFeedback');
+ if(i===q[2]){score++;b.classList.add('correct');f.textContent='✅ Dobrze!';f.style.color='var(--green)'}
+ else{b.classList.add('wrong');f.textContent='❌ Nie tym razem. Prawidłowa odpowiedź: '+q[1][q[2]];f.style.color='var(--red)'}
+ f.classList.add('show');
+ setTimeout(()=>{qi++;if(qi<quiz.length)loadQuiz();else{document.getElementById('quizCard').style.display='none';document.getElementById('quizResult').style.display='block';document.getElementById('scoreText').textContent=score+' / '+quiz.length}},1100);
+}
+loadQuiz();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Animated counters for plain numbers
+  document.querySelectorAll('.count-up').forEach(el => {
+    const target = parseInt(el.textContent.replace(/\D/g,''),10);
+    if(!target) return;
+    let start = 0, duration = 900, t0 = performance.now();
+    const tick = now => {
+      const p = Math.min((now-t0)/duration,1);
+      const eased = 1-Math.pow(1-p,3);
+      el.textContent = Math.round(start+(target-start)*eased);
+      if(p<1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  // Small feedback toast
+  window.projectoraToast = function(msg){
+    document.querySelectorAll('.toast').forEach(x=>x.remove());
+    const t=document.createElement('div');
+    t.className='toast'; t.textContent=msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),2600);
+  };
+
+  // Highlight active section while scrolling
+  const sections=[...document.querySelectorAll('main section[id]')];
+  const links=[...document.querySelectorAll('.nav a[href^="#"]')];
+  const navObs=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id));
+      }
+    });
+  },{rootMargin:'-35% 0px -55% 0px',threshold:0});
+  sections.forEach(s=>navObs.observe(s));
+
+  // Add subtle click feedback to interactive elements
+  document.querySelectorAll('button,.btn,.quiz-option').forEach(el=>{
+    el.addEventListener('click',()=> {
+      el.animate([{transform:'scale(.98)'},{transform:'scale(1)'}],{duration:180,easing:'ease-out'});
+    });
+  });
+
+  // Quiz completion confetti
+  document.querySelectorAll('button').forEach(btn=>{
+    if(/sprawdź|zakończ|wynik|quiz/i.test(btn.textContent)){
+      btn.addEventListener('click',()=>{
+        setTimeout(()=>{
+          const visibleText=document.body.innerText;
+          if(/100%|5\/5|5 na 5|świetnie|gratul/i.test(visibleText)){
+            for(let i=0;i<28;i++){
+              const c=document.createElement('i'); c.className='confetti';
+              c.style.left=Math.random()*100+'vw';
+              c.style.setProperty('--x',(Math.random()*240-120)+'px');
+              c.style.animationDelay=(Math.random()*.35)+'s';
+              document.body.appendChild(c);
+              setTimeout(()=>c.remove(),2300);
+            }
+          }
+        },250);
+      });
+    }
+  });
+});
+</script>
+
+<div style="position:fixed;left:18px;bottom:10px;font-size:10px;color:#69708f;opacity:.65;z-index:50">PROJECTORA • v2 + QUIZ HOST</div>
+</body>
+</html>

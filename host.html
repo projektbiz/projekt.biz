@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PROJECTORA — Prowadzący</title>
+
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
+.wrap{max-width:1000px;margin:auto;padding:28px 18px}.card{background:#151c31;border:1px solid #293453;border-radius:22px;padding:28px;box-shadow:0 15px 50px #0005}
+h1{margin:0 0 8px;font-size:34px}.muted{color:#aeb8d0}.hidden{display:none!important}
+button{border:0;border-radius:12px;padding:14px 20px;font-weight:900;font-size:16px;cursor:pointer;background:#6c7cff;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+.code{font-size:64px;font-weight:1000;letter-spacing:10px;text-align:center;margin:25px 0}.center{text-align:center}.pill{display:inline-block;padding:9px 13px;border-radius:999px;background:#222c49;color:#dbe2ff;margin:4px}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:20px 0}.player{background:#202a45;border-radius:12px;padding:14px;font-weight:800}.status{margin:15px 0;text-align:center}.list{max-height:380px;overflow:auto}
+.podium{display:flex;align-items:end;justify-content:center;gap:12px;height:280px;margin-top:25px}.place{width:28%;text-align:center}.block{display:flex;align-items:center;justify-content:center;border-radius:14px 14px 0 0;font-size:30px;font-weight:900;background:#27304a}.p1 .block{height:170px}.p2 .block{height:125px}.p3 .block{height:90px}.name{font-weight:800;margin:8px 0}.score{color:#aeb8d0}
+</style>
+<style>.hidden{display:none!important}.qr{display:inline-block}</style>
+<style id="center-host">
+html,body{min-height:100%;margin:0}
+body{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  padding:24px!important;
+  box-sizing:border-box;
+}
+body>*{box-sizing:border-box}
+.panel{
+  width:min(100%,960px)!important;
+  margin:0 auto!important;
+  text-align:center!important;
+}
+#lobby,#running,#results{
+  width:100%!important;
+  margin:0 auto!important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+#lobby.hidden,#running.hidden,#results.hidden{display:none!important}
+#qrcode{
+  margin:18px auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+#qrcode img,#qrcode canvas{display:block!important;margin:auto!important}
+#players{
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+}
+#start{margin:22px auto!important}
+#podium{
+  width:100%!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  flex-wrap:wrap!important;
+  gap:18px!important;
+}
+</style>
+</head>
+<body>
+<div class="panel">
+ <section id="lobby">
+  <h1>🎮 QUIZ KLASOWY</h1>
+  <p id="status">Tworzenie pokoju...</p>
+  <div id="qrcode" class="qr"></div>
+  <p><b>📱 ZESKANUJ KOD, ABY DOŁĄCZYĆ DO QUIZU</b></p>
+  <p id="joinUrl"></p>
+  <h2>KOD: <span id="code" class="code">------</span></h2>
+  <h2>👥 <span id="playerCount">0 graczy</span></h2>
+  <div id="players" class="players"></div>
+  <br><button id="start" disabled>▶ ROZPOCZNIJ QUIZ</button>
+ </section>
+ <section id="running" class="hidden"><h1>QUIZ TRWA</h1><h2>KOD: <span id="runCode"></span></h2><h2 id="runInfo"></h2><p id="finishInfo"></p></section>
+ <section id="results" class="hidden"><h1>🏆 WYNIKI</h1><div id="podium"></div></section>
+</div></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+const SUPABASE_URL="https://megktvolzzqkeykzjkhe.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_qL5wS3xcDN8CbnUQ-Uvusw_zVxoBOMH";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const JOIN_PATH="gra.html";
+let room=null,poll=null,finishing=false,qr=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
+function makeCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function joinUrl(){
+  const u=new URL(JOIN_PATH,window.location.href);
+  return u.href;
+}
+function makeQR(){
+  const box=$("qrcode");
+  if(!box || typeof QRCode==="undefined") return;
+  box.innerHTML="";
+  qr=new QRCode(box,{text:joinUrl(),width:220,height:220});
+  $("joinUrl").textContent=joinUrl();
+}
+async function createRoom(){
+  $("status").textContent="Tworzenie pokoju...";
+  for(let i=0;i<15;i++){
+    const code=makeCode();
+    const {data,error}=await sb.from("rooms").insert({
+      code:code,status:"lobby",current_question:0
+    }).select("code,status,current_question").single();
+    if(!error){room=data;break}
+  }
+  if(!room){
+    $("status").textContent="Nie udało się utworzyć pokoju. Sprawdź tabelę rooms i uprawnienia RLS.";
+    return;
+  }
+  $("code").textContent=room.code;
+  makeQR();
+  $("status").textContent="Zeskanuj QR lub wpisz kod, aby dołączyć.";
+  poll=setInterval(refreshLobby,700);
+  refreshLobby();
+}
+async function refreshLobby(){
+  if(!room || room.status!=="lobby") return;
+  const {data:ps,error}=await sb.from("players")
+    .select("id,nickname,finished,score")
+    .eq("room_code",room.code)
+    .order("joined_at",{ascending:true});
+  if(error){
+    $("status").textContent="Błąd odczytu graczy: "+error.message;
+    return;
+  }
+  const arr=ps||[];
+  $("playerCount").textContent=`${arr.length} ${arr.length===1?"gracz":"graczy"}`;
+  $("players").innerHTML=arr.map(p=>`<div class="player">${esc(p.nickname)}</div>`).join("");
+  $("start").disabled=arr.length===0;
+}
+$("start").onclick=async()=>{
+  if(!room)return;
+  $("start").disabled=true;
+  $("status").textContent="Uruchamianie quizu...";
+  const {data,error}=await sb.from("rooms").update({
+    status:"playing",current_question:0
+  }).eq("code",room.code).select("code,status,current_question").single();
+  if(error){
+    $("status").textContent="Błąd uruchomienia: "+error.message;
+    $("start").disabled=false;
+    return;
+  }
+  room=data;
+  $("lobby").classList.add("hidden");
+  $("running").classList.remove("hidden");
+  $("runCode").textContent=room.code;
+  clearInterval(poll);
+  poll=setInterval(refreshPlaying,700);
+  refreshPlaying();
+};
+async function refreshPlaying(){
+  if(!room)return;
+  const {data:r}=await sb.from("rooms").select("code,status,current_question").eq("code",room.code).maybeSingle();
+  if(!r)return;
+  room=r;
+  if(r.status==="finished"){
+    clearInterval(poll);
+    showResults();
+    return;
+  }
+  const {data:ps,error}=await sb.from("players")
+    .select("id,nickname,finished,score")
+    .eq("room_code",room.code);
+  if(error)return;
+  const arr=ps||[],done=arr.filter(p=>p.finished).length;
+  $("runInfo").textContent=`Ukończyło: ${done}/${arr.length}`;
+  $("finishInfo").textContent=arr.length?(done===arr.length?"Wszyscy ukończyli — wyniki za chwilę...":"Uczniowie rozwiązują quiz niezależnie."):"";
+  if(arr.length && done===arr.length && !finishing){
+    finishing=true;
+    const {error:ue}=await sb.from("rooms").update({status:"finished"}).eq("code",room.code);
+    if(!ue)showResults();
+  }
+}
+async function showResults(){
+  $("lobby").classList.add("hidden");
+  $("running").classList.add("hidden");
+  $("results").classList.remove("hidden");
+  const {data:ps}=await sb.from("players")
+    .select("nickname,score")
+    .eq("room_code",room.code)
+    .order("score",{ascending:false})
+    .limit(3);
+  const labels=["🥇","🥈","🥉"],classes=["p1","p2","p3"];
+  $("podium").innerHTML="";
+  (ps||[]).forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className="place "+classes[i];
+    d.innerHTML=`<div class="name">${labels[i]} ${esc(p.nickname)}</div><div class="block">${i+1}</div><div class="score">${p.score||0} pkt</div>`;
+    $("podium").appendChild(d);
+  });
+}
+createRoom();
+</script>
+
+</body></html>
