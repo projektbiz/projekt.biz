@@ -704,6 +704,71 @@ section > h2::before{content:"//";font-size:.55em;color:var(--p2);margin-right:1
 }
 </style>
 
+
+<style>
+/* ===== ANIMACJA ŁADOWANIA WYKRESU + BUDŻETU ===== */
+.gantt-loading .bar{
+  transform:scaleX(0);
+  transform-origin:left center;
+  opacity:.15;
+  filter:brightness(.7);
+}
+.gantt-loading .bar.is-loading{
+  animation:ganttBarLoad .85s cubic-bezier(.2,.8,.2,1) forwards;
+  animation-delay:var(--delay,0ms);
+}
+@keyframes ganttBarLoad{
+  0%{transform:scaleX(0);opacity:.15;filter:brightness(.7)}
+  65%{opacity:1;filter:brightness(1.35)}
+  100%{transform:scaleX(1);opacity:1;filter:brightness(1)}
+}
+.gantt-loading .bar.is-loading::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:translateX(-120%);
+  animation:barScanner 1s ease var(--delay,0ms) both;
+}
+@keyframes barScanner{to{transform:translateX(120%)}}
+
+.budget-loading .money{
+  opacity:1;
+  animation:budgetTotalIn .65s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes budgetTotalIn{from{opacity:.2;transform:translateY(12px) scale(.97);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+.budget-loading .cost{opacity:0;transform:translateY(10px);}
+.budget-loading .cost.is-loading{
+  animation:budgetRowIn .5s cubic-bezier(.2,.8,.2,1) forwards;
+  animation-delay:var(--delay,0ms);
+}
+@keyframes budgetRowIn{to{opacity:1;transform:none}}
+.budget-loading .costBar i{
+  display:block;
+  transform:scaleX(0);
+  transform-origin:left center;
+}
+.budget-loading .cost.is-loading .costBar i{
+  animation:budgetBarLoad .8s cubic-bezier(.2,.8,.2,1) forwards;
+  animation-delay:calc(var(--delay,0ms) + 180ms);
+}
+@keyframes budgetBarLoad{0%{transform:scaleX(0);filter:brightness(1.5)}70%{filter:brightness(1.35)}100%{transform:scaleX(1);filter:brightness(1)}}
+.budget-loading .cost.is-loading .costBar i::after{
+  content:"";position:absolute;inset:0;
+}
+.projectora-loading-label{
+  margin-top:10px;color:#8fa2c7;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;opacity:.9;
+}
+.projectora-loading-label::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:var(--neon-cyan,#27d8ff);
+  box-shadow:0 0 10px var(--neon-cyan,#27d8ff);animation:loadDot .8s ease-in-out infinite alternate;
+}
+@keyframes loadDot{to{opacity:.25;transform:scale(.65)}}
+@media(prefers-reduced-motion:reduce){
+ .gantt-loading .bar,.budget-loading .cost{transform:none!important;opacity:1!important;animation:none!important}
+ .budget-loading .costBar i{transform:scaleX(1)!important;animation:none!important}
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -1097,6 +1162,172 @@ document.addEventListener('DOMContentLoaded', () => {
       progress.style.transition='width 1.2s cubic-bezier(.2,.8,.2,1)'; progress.style.width=pct+'%'; io.disconnect();
     }});io.observe(progress);
   }
+})();
+</script>
+
+
+<script>
+/* ===== PROJECTORA: prawdziwe ładowanie wykresu i budżetu przy wejściu do sekcji ===== */
+(function(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function addLoadingLabel(section, text){
+    let label=section.querySelector('.projectora-loading-label');
+    if(!label){
+      label=document.createElement('div');
+      label.className='projectora-loading-label';
+      const anchor=section.querySelector('.gantt, .money');
+      if(anchor && anchor.parentElement) anchor.parentElement.insertBefore(label, anchor.nextSibling);
+    }
+    label.textContent=text;
+    return label;
+  }
+
+  function playGantt(){
+    const section=document.getElementById('gantt');
+    if(!section) return;
+    const bars=[...section.querySelectorAll('.gantt .bar')];
+    if(!bars.length) return;
+    section.classList.remove('gantt-loading');
+    bars.forEach(b=>{b.classList.remove('is-loading');b.style.removeProperty('--delay');});
+    void section.offsetWidth;
+    section.classList.add('gantt-loading');
+    if(reduce){bars.forEach(b=>b.classList.add('is-loading'));return;}
+    bars.forEach((b,i)=>{b.style.setProperty('--delay',(i*260)+'ms');b.classList.add('is-loading');});
+    const old=section.querySelector('.projectora-loading-label');
+    if(old) old.remove();
+    const label=addLoadingLabel(section,'ŁADOWANIE HARMONOGRAMU…');
+    setTimeout(()=>{if(label && section.classList.contains('active')) label.textContent='✓ HARMONOGRAM GOTOWY';},bars.length*260+850);
+  }
+
+  function playBudget(){
+    const section=document.getElementById('budget');
+    if(!section) return;
+    const costs=[...section.querySelectorAll('.cost')];
+    const money=section.querySelector('.money');
+    section.classList.remove('budget-loading');
+    costs.forEach(c=>{c.classList.remove('is-loading');c.style.removeProperty('--delay');});
+    if(money) money.style.removeProperty('--budgetValue');
+    void section.offsetWidth;
+    section.classList.add('budget-loading');
+    if(money){
+      const target=50000;
+      if(reduce){money.textContent='50 000 zł';}
+      else{
+        money.textContent='0 zł';
+        const start=performance.now(), duration=850;
+        function count(now){
+          const p=Math.min((now-start)/duration,1);
+          const eased=1-Math.pow(1-p,3);
+          money.textContent=Math.round(target*eased).toLocaleString('pl-PL')+' zł';
+          if(p<1) requestAnimationFrame(count);
+        }
+        requestAnimationFrame(count);
+      }
+    }
+    if(reduce){costs.forEach(c=>c.classList.add('is-loading'));return;}
+    costs.forEach((c,i)=>{c.style.setProperty('--delay',(850+i*180)+'ms');c.classList.add('is-loading');});
+    const old=section.querySelector('.projectora-loading-label');
+    if(old) old.remove();
+    const label=addLoadingLabel(section,'ŁADOWANIE BUDŻETU…');
+    setTimeout(()=>{if(label && section.classList.contains('active')) label.textContent='✓ BUDŻET ZAŁADOWANY';},850+costs.length*180+850);
+  }
+
+  function playFor(id){
+    if(id==='gantt') setTimeout(playGantt,90);
+    if(id==='budget') setTimeout(playBudget,90);
+  }
+
+  const oldGo=window.go;
+  if(typeof oldGo==='function'){
+    window.go=function(id){oldGo(id);playFor(id);};
+  }
+  document.addEventListener('click',function(e){
+    const el=e.target.closest('[data-go],button,a');
+    if(!el) return;
+    const id=el.getAttribute('data-go');
+    if(id) playFor(id);
+  },true);
+
+  setTimeout(()=>{
+    const active=document.querySelector('.section.active');
+    if(active) playFor(active.id);
+  },180);
+})();
+</script>
+
+
+<style>
+/* ===== KAMIENIE MILOWE — ładowanie po kolei ===== */
+.milestones-loading .timeline:before{
+  transform:scaleX(0);transform-origin:left center;
+  animation:milestoneLine .75s ease-out .15s forwards;
+}
+.milestones-loading .mile{
+  opacity:0;
+  transform:translateY(24px) scale(.94);
+  filter:blur(2px);
+}
+.milestones-loading .mile:nth-child(1){animation:milestoneIn .55s cubic-bezier(.2,.8,.2,1) .35s forwards}
+.milestones-loading .mile:nth-child(2){animation:milestoneIn .55s cubic-bezier(.2,.8,.2,1) .65s forwards}
+.milestones-loading .mile:nth-child(3){animation:milestoneIn .55s cubic-bezier(.2,.8,.2,1) .95s forwards}
+.milestones-loading .mile:nth-child(4){animation:milestoneIn .55s cubic-bezier(.2,.8,.2,1) 1.25s forwards}
+.milestones-loading .mile:nth-child(5){animation:milestoneIn .55s cubic-bezier(.2,.8,.2,1) 1.55s forwards}
+.milestones-loading .mile .dot{
+  transition:box-shadow .3s ease,transform .3s ease;
+}
+.milestones-loading .mile.major .dot{animation:milestonePulse 1.1s ease-in-out 1.15s 2}
+@keyframes milestoneLine{to{transform:scaleX(1)}}
+@keyframes milestoneIn{to{opacity:1;transform:none;filter:none}}
+@keyframes milestonePulse{50%{transform:scale(1.13);box-shadow:0 0 35px rgba(155,92,255,.75)}}
+.milestones-loading-label{
+  margin-top:10px;color:#8fa2c7;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;opacity:.9;
+}
+.milestones-loading-label:before{
+  content:"";width:7px;height:7px;border-radius:50%;background:#5ff7ff;
+  box-shadow:0 0 10px #5ff7ff;animation:milestoneDot .8s ease-in-out infinite alternate;
+}
+@keyframes milestoneDot{to{opacity:.25;transform:scale(.65)}}
+@media(prefers-reduced-motion:reduce){
+ .milestones-loading .timeline:before,.milestones-loading .mile{animation:none!important;transform:none!important;opacity:1!important;filter:none!important}
+}
+</style>
+<script>
+/* ===== PROJECTORA — niezależna animacja kamieni milowych ===== */
+(function(){
+  const reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function playMilestones(){
+    const section=document.getElementById('milestones');
+    if(!section || !section.classList.contains('active')) return;
+    section.classList.remove('milestones-loading');
+    const old=section.querySelector('.milestones-loading-label');
+    if(old) old.remove();
+    void section.offsetWidth;
+    section.classList.add('milestones-loading');
+    const label=document.createElement('div');
+    label.className='milestones-loading-label';
+    label.textContent=reduce?'✓ KAMIENIE MILOWE GOTOWE':'ŁADOWANIE KAMIENI MILOWYCH…';
+    const timeline=section.querySelector('.timeline');
+    if(timeline) timeline.parentNode.insertBefore(label,timeline.nextSibling);
+    if(!reduce){
+      setTimeout(()=>{
+        if(label && section.classList.contains('active')) label.textContent='✓ KAMIENIE MILOWE GOTOWE';
+      },2300);
+    }
+  }
+  const previousGo=window.go;
+  if(typeof previousGo==='function') window.go=function(id){
+    previousGo(id);
+    if(id==='milestones') setTimeout(playMilestones,70);
+  };
+  document.addEventListener('click',function(e){
+    const el=e.target.closest('[data-go],button');
+    if(!el) return;
+    const id=el.getAttribute('data-go');
+    if(id==='milestones') setTimeout(playMilestones,80);
+  },true);
+  setTimeout(()=>{if(document.getElementById('milestones')?.classList.contains('active')) playMilestones()},300);
 })();
 </script>
 
