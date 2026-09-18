@@ -2,207 +2,1315 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>PROJECTORA — Prowadzący</title>
 
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
-.wrap{max-width:1000px;margin:auto;padding:28px 18px}.card{background:#151c31;border:1px solid #293453;border-radius:22px;padding:28px;box-shadow:0 15px 50px #0005}
-h1{margin:0 0 8px;font-size:34px}.muted{color:#aeb8d0}.hidden{display:none!important}
-button{border:0;border-radius:12px;padding:14px 20px;font-weight:900;font-size:16px;cursor:pointer;background:#6c7cff;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
-.code{font-size:64px;font-weight:1000;letter-spacing:10px;text-align:center;margin:25px 0}.center{text-align:center}.pill{display:inline-block;padding:9px 13px;border-radius:999px;background:#222c49;color:#dbe2ff;margin:4px}
-.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:20px 0}.player{background:#202a45;border-radius:12px;padding:14px;font-weight:800}.status{margin:15px 0;text-align:center}.list{max-height:380px;overflow:auto}
-.podium{display:flex;align-items:end;justify-content:center;gap:12px;height:280px;margin-top:25px}.place{width:28%;text-align:center}.block{display:flex;align-items:center;justify-content:center;border-radius:14px 14px 0 0;font-size:30px;font-weight:900;background:#27304a}.p1 .block{height:170px}.p2 .block{height:125px}.p3 .block{height:90px}.name{font-weight:800;margin:8px 0}.score{color:#aeb8d0}
-</style>
-<style>.hidden{display:none!important}.qr{display:inline-block}</style>
-<style id="center-host">
-html,body{min-height:100%;margin:0}
-body{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  padding:24px!important;
-  box-sizing:border-box;
+/* =========================
+   RESET
+========================= */
+
+* {
+    box-sizing: border-box;
 }
-body>*{box-sizing:border-box}
-.panel{
-  width:min(100%,960px)!important;
-  margin:0 auto!important;
-  text-align:center!important;
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
 }
-#lobby,#running,#results{
-  width:100%!important;
-  margin:0 auto!important;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
+
+body {
+    min-height: 100vh;
+    font-family: Inter, Arial, sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background:
+        radial-gradient(circle at 20% 20%, #5146e522, transparent 35%),
+        radial-gradient(circle at 80% 80%, #00d4ff18, transparent 35%),
+        #080d1c;
 }
-#lobby.hidden,#running.hidden,#results.hidden{display:none!important}
-#qrcode{
-  margin:18px auto!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
+
+
+/* =========================
+   ANIMOWANE TŁO
+========================= */
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: .35;
+    z-index: -1;
+    pointer-events: none;
 }
-#qrcode img,#qrcode canvas{display:block!important;margin:auto!important}
-#players{
-  width:100%!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  flex-wrap:wrap!important;
-  gap:10px!important;
+
+body::before {
+    background: #6c7cff;
+    top: -180px;
+    left: -150px;
+    animation: floatOne 9s ease-in-out infinite alternate;
 }
-#start{margin:22px auto!important}
-#podium{
-  width:100%!important;
-  display:flex!important;
-  align-items:flex-end!important;
-  justify-content:center!important;
-  flex-wrap:wrap!important;
-  gap:18px!important;
+
+body::after {
+    background: #00d4ff;
+    right: -180px;
+    bottom: -180px;
+    animation: floatTwo 11s ease-in-out infinite alternate;
+}
+
+@keyframes floatOne {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        transform: translate(100px, 80px) scale(1.2);
+    }
+}
+
+@keyframes floatTwo {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        transform: translate(-100px, -80px) scale(1.25);
+    }
+}
+
+
+/* =========================
+   GŁÓWNY PANEL
+========================= */
+
+.panel {
+    width: min(100%, 960px);
+    margin: auto;
+    text-align: center;
+
+    animation: panelIn .8s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes panelIn {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================
+   SEKCJE
+========================= */
+
+#lobby,
+#running,
+#results {
+    width: 100%;
+    background: rgba(21, 28, 49, .88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border: 1px solid rgba(108, 124, 255, .25);
+    border-radius: 28px;
+
+    padding: 35px 28px;
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    animation: sectionIn .6s ease;
+}
+
+@keyframes sectionIn {
+    from {
+        opacity: 0;
+        transform: scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================
+   NAGŁÓWKI
+========================= */
+
+h1 {
+    margin: 0 0 10px;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 1000;
+
+    background: linear-gradient(
+        90deg,
+        #fff,
+        #9faaff,
+        #6c7cff,
+        #fff
+    );
+
+    background-size: 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    animation: gradientText 5s linear infinite;
+}
+
+@keyframes gradientText {
+    0% {
+        background-position: 0%;
+    }
+
+    100% {
+        background-position: 300%;
+    }
+}
+
+h2 {
+    margin: 14px 0;
+}
+
+p {
+    line-height: 1.5;
+}
+
+#status {
+    color: #aeb8d0;
+    min-height: 24px;
+}
+
+
+/* =========================
+   KOD
+========================= */
+
+.code {
+    display: inline-block;
+
+    font-size: clamp(42px, 10vw, 72px);
+    font-weight: 1000;
+    letter-spacing: clamp(5px, 2vw, 12px);
+
+    color: #fff;
+
+    text-shadow:
+        0 0 15px #6c7cff99,
+        0 0 35px #6c7cff55;
+
+    animation: codePulse 2.2s ease-in-out infinite;
+}
+
+@keyframes codePulse {
+    0%, 100% {
+        transform: scale(1);
+        text-shadow:
+            0 0 15px #6c7cff99,
+            0 0 35px #6c7cff55;
+    }
+
+    50% {
+        transform: scale(1.04);
+        text-shadow:
+            0 0 25px #6c7cff,
+            0 0 55px #6c7cff77;
+    }
+}
+
+
+/* =========================
+   QR
+========================= */
+
+#qrcode {
+    margin: 20px auto;
+
+    padding: 14px;
+
+    background: white;
+    border-radius: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,.05),
+        0 15px 40px rgba(0,0,0,.35);
+
+    animation: qrFloat 3s ease-in-out infinite;
+}
+
+#qrcode img,
+#qrcode canvas {
+    display: block;
+    border-radius: 8px;
+}
+
+@keyframes qrFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+#joinUrl {
+    color: #8290ff;
+    font-size: 13px;
+    max-width: 100%;
+    word-break: break-all;
+}
+
+
+/* =========================
+   GRACZE
+========================= */
+
+.players {
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(150px, 1fr)
+    );
+
+    gap: 12px;
+
+    margin: 20px 0;
+}
+
+.player {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(38,50,83,.95),
+            rgba(29,39,67,.95)
+        );
+
+    border: 1px solid rgba(108,124,255,.15);
+    border-radius: 14px;
+
+    padding: 15px;
+
+    font-weight: 800;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,.15);
+
+    animation: playerIn .45s cubic-bezier(.2,.8,.2,1);
+    transition:
+        transform .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
+}
+
+.player:hover {
+    transform: translateY(-5px) scale(1.02);
+
+    background:
+        linear-gradient(
+            135deg,
+            #344273,
+            #26365f
+        );
+
+    box-shadow:
+        0 12px 30px rgba(0,0,0,.3),
+        0 0 20px #6c7cff22;
+}
+
+@keyframes playerIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================
+   PRZYCISK
+========================= */
+
+button {
+    border: 0;
+    border-radius: 14px;
+
+    padding: 15px 25px;
+
+    font-weight: 900;
+    font-size: 16px;
+
+    cursor: pointer;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7180ff,
+            #5968ef
+        );
+
+    box-shadow:
+        0 10px 30px #6c7cff44;
+
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        filter .2s ease;
+}
+
+button::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -120%;
+
+    width: 80%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.35),
+        transparent
+    );
+
+    transform: skewX(-20deg);
+
+    transition: left .5s ease;
+}
+
+button:hover::before {
+    left: 130%;
+}
+
+button:hover {
+    transform: translateY(-3px) scale(1.03);
+
+    box-shadow:
+        0 15px 40px #6c7cff66;
+
+    filter: brightness(1.08);
+}
+
+button:active {
+    transform: translateY(0) scale(.98);
+}
+
+button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================
+   EKRAN QUIZU
+========================= */
+
+#running {
+    min-height: 420px;
+}
+
+#running h1 {
+    animation:
+        gradientText 5s linear infinite,
+        runningPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes runningPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.04);
+    }
+}
+
+#runInfo {
+    color: #dce2ff;
+    font-size: 26px;
+}
+
+#finishInfo {
+    color: #aeb8d0;
+}
+
+
+/* =========================
+   PODIUM
+========================= */
+
+#podium {
+    width: 100%;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    gap: 18px;
+
+    min-height: 300px;
+    margin-top: 25px;
+}
+
+.place {
+    width: 28%;
+    max-width: 220px;
+    text-align: center;
+
+    animation: podiumIn .8s cubic-bezier(.2,.8,.2,1);
+}
+
+.place:nth-child(1) {
+    animation-delay: .1s;
+}
+
+.place:nth-child(2) {
+    animation-delay: .25s;
+}
+
+.place:nth-child(3) {
+    animation-delay: .4s;
+}
+
+@keyframes podiumIn {
+    from {
+        opacity: 0;
+        transform:
+            translateY(100px)
+            scale(.8);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+.block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px 16px 0 0;
+
+    font-size: 32px;
+    font-weight: 1000;
+
+    color: white;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.15),
+        0 10px 30px rgba(0,0,0,.25);
+
+    animation: blockGlow 2.5s ease-in-out infinite;
+}
+
+.p1 .block {
+    height: 180px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffd84d,
+            #b98200
+        );
+}
+
+.p2 .block {
+    height: 135px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #dce7f0,
+            #788b9a
+        );
+}
+
+.p3 .block {
+    height: 100px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #d9915c,
+            #85451f
+        );
+}
+
+@keyframes blockGlow {
+    0%, 100% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.15);
+    }
+}
+
+.name {
+    font-weight: 900;
+    margin: 10px 0;
+    word-break: break-word;
+}
+
+.score {
+    color: #aeb8d0;
+    font-weight: 700;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 12px;
+    }
+
+    #lobby,
+    #running,
+    #results {
+        padding: 25px 16px;
+        border-radius: 22px;
+    }
+
+    .players {
+        grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    }
+
+    #qrcode {
+        transform: scale(.9);
+    }
+
+    #podium {
+        gap: 8px;
+    }
+
+    .place {
+        width: 31%;
+    }
+
+    .p1 .block {
+        height: 150px;
+    }
+
+    .p2 .block {
+        height: 110px;
+    }
+
+    .p3 .block {
+        height: 80px;
+    }
+}
+
+
+/* =========================
+   REDUKCJA ANIMACJI
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
 }
 </style>
 </head>
+
 <body>
+
 <div class="panel">
- <section id="lobby">
-  <h1>🎮 QUIZ KLASOWY</h1>
-  <p id="status">Tworzenie pokoju...</p>
-  <div id="qrcode" class="qr"></div>
-  <p><b>📱 ZESKANUJ KOD, ABY DOŁĄCZYĆ DO QUIZU</b></p>
-  <p id="joinUrl"></p>
-  <h2>KOD: <span id="code" class="code">------</span></h2>
-  <h2>👥 <span id="playerCount">0 graczy</span></h2>
-  <div id="players" class="players"></div>
-  <br><button id="start" disabled>▶ ROZPOCZNIJ QUIZ</button>
- </section>
- <section id="running" class="hidden"><h1>QUIZ TRWA</h1><h2>KOD: <span id="runCode"></span></h2><h2 id="runInfo"></h2><p id="finishInfo"></p></section>
- <section id="results" class="hidden"><h1>🏆 WYNIKI</h1><div id="podium"></div></section>
-</div></body></html>
+
+    <!-- ================= LOBBY ================= -->
+
+    <section id="lobby">
+
+        <h1>🎮 QUIZ KLASOWY</h1>
+
+        <p id="status">
+            Tworzenie pokoju...
+        </p>
+
+        <div id="qrcode"></div>
+
+        <p>
+            <b>
+                📱 ZESKANUJ KOD, ABY DOŁĄCZYĆ DO QUIZU
+            </b>
+        </p>
+
+        <p id="joinUrl"></p>
+
+        <h2>
+            KOD:
+            <span id="code" class="code">------</span>
+        </h2>
+
+        <h2>
+            👥
+            <span id="playerCount">
+                0 graczy
+            </span>
+        </h2>
+
+        <div id="players" class="players"></div>
+
+        <button id="start" disabled>
+            ▶ ROZPOCZNIJ QUIZ
+        </button>
+
+    </section>
+
+
+    <!-- ================= QUIZ ================= -->
+
+    <section id="running" class="hidden">
+
+        <h1>🎯 QUIZ TRWA</h1>
+
+        <h2>
+            KOD:
+            <span id="runCode"></span>
+        </h2>
+
+        <h2 id="runInfo">
+            Oczekiwanie...
+        </h2>
+
+        <p id="finishInfo"></p>
+
+    </section>
+
+
+    <!-- ================= WYNIKI ================= -->
+
+    <section id="results" class="hidden">
+
+        <h1>🏆 WYNIKI</h1>
+
+        <div id="podium"></div>
+
+    </section>
+
+</div>
+
+
+<!-- ================= BIBLIOTEKI ================= -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+
 <script>
-const SUPABASE_URL="https://megktvolzzqkeykzjkhe.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_qL5wS3xcDN8CbnUQ-Uvusw_zVxoBOMH";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-const JOIN_PATH="gra.html";
-let room=null,poll=null,finishing=false,qr=null;
-const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+/* =========================
+   SUPABASE
+========================= */
 
-function makeCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function joinUrl(){
-  const u=new URL(JOIN_PATH,window.location.href);
-  return u.href;
+const SUPABASE_URL =
+    "https://megktvolzzqkeykzjkhe.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_qL5wS3xcDN8CbnUQ-Uvusw_zVxoBOMH";
+
+const sb =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+/* =========================
+   KONFIGURACJA
+========================= */
+
+const JOIN_PATH = "gra.html";
+
+let room = null;
+let poll = null;
+let finishing = false;
+let qr = null;
+
+
+/* =========================
+   HELPER
+========================= */
+
+const $ = id =>
+    document.getElementById(id);
+
+
+function esc(value) {
+
+    return String(value).replace(
+        /[&<>"']/g,
+
+        m => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        }[m])
+    );
+
 }
-function makeQR(){
-  const box=$("qrcode");
-  if(!box || typeof QRCode==="undefined") return;
-  box.innerHTML="";
-  qr=new QRCode(box,{text:joinUrl(),width:220,height:220});
-  $("joinUrl").textContent=joinUrl();
+
+
+function makeCode() {
+
+    return Math.random()
+        .toString(36)
+        .slice(2, 8)
+        .toUpperCase();
+
 }
-async function createRoom(){
-  $("status").textContent="Tworzenie pokoju...";
-  for(let i=0;i<15;i++){
-    const code=makeCode();
-    const {data,error}=await sb.from("rooms").insert({
-      code:code,status:"lobby",current_question:0
-    }).select("code,status,current_question").single();
-    if(!error){room=data;break}
-  }
-  if(!room){
-    $("status").textContent="Nie udało się utworzyć pokoju. Sprawdź tabelę rooms i uprawnienia RLS.";
-    return;
-  }
-  $("code").textContent=room.code;
-  makeQR();
-  $("status").textContent="Zeskanuj QR lub wpisz kod, aby dołączyć.";
-  poll=setInterval(refreshLobby,700);
-  refreshLobby();
+
+
+function joinUrl() {
+
+    const u =
+        new URL(
+            JOIN_PATH,
+            window.location.href
+        );
+
+    return u.href;
+
 }
-async function refreshLobby(){
-  if(!room || room.status!=="lobby") return;
-  const {data:ps,error}=await sb.from("players")
-    .select("id,nickname,finished,score")
-    .eq("room_code",room.code)
-    .order("joined_at",{ascending:true});
-  if(error){
-    $("status").textContent="Błąd odczytu graczy: "+error.message;
-    return;
-  }
-  const arr=ps||[];
-  $("playerCount").textContent=`${arr.length} ${arr.length===1?"gracz":"graczy"}`;
-  $("players").innerHTML=arr.map(p=>`<div class="player">${esc(p.nickname)}</div>`).join("");
-  $("start").disabled=arr.length===0;
+
+
+/* =========================
+   QR CODE
+========================= */
+
+function makeQR() {
+
+    const box =
+        $("qrcode");
+
+    if (
+        !box ||
+        typeof QRCode === "undefined"
+    ) {
+        return;
+    }
+
+    box.innerHTML = "";
+
+    qr = new QRCode(
+        box,
+        {
+            text: joinUrl(),
+            width: 220,
+            height: 220
+        }
+    );
+
+    $("joinUrl").textContent =
+        joinUrl();
+
 }
-$("start").onclick=async()=>{
-  if(!room)return;
-  $("start").disabled=true;
-  $("status").textContent="Uruchamianie quizu...";
-  const {data,error}=await sb.from("rooms").update({
-    status:"playing",current_question:0
-  }).eq("code",room.code).select("code,status,current_question").single();
-  if(error){
-    $("status").textContent="Błąd uruchomienia: "+error.message;
-    $("start").disabled=false;
-    return;
-  }
-  room=data;
-  $("lobby").classList.add("hidden");
-  $("running").classList.remove("hidden");
-  $("runCode").textContent=room.code;
-  clearInterval(poll);
-  poll=setInterval(refreshPlaying,700);
-  refreshPlaying();
-};
-async function refreshPlaying(){
-  if(!room)return;
-  const {data:r}=await sb.from("rooms").select("code,status,current_question").eq("code",room.code).maybeSingle();
-  if(!r)return;
-  room=r;
-  if(r.status==="finished"){
-    clearInterval(poll);
-    showResults();
-    return;
-  }
-  const {data:ps,error}=await sb.from("players")
-    .select("id,nickname,finished,score")
-    .eq("room_code",room.code);
-  if(error)return;
-  const arr=ps||[],done=arr.filter(p=>p.finished).length;
-  $("runInfo").textContent=`Ukończyło: ${done}/${arr.length}`;
-  $("finishInfo").textContent=arr.length?(done===arr.length?"Wszyscy ukończyli — wyniki za chwilę...":"Uczniowie rozwiązują quiz niezależnie."):"";
-  if(arr.length && done===arr.length && !finishing){
-    finishing=true;
-    const {error:ue}=await sb.from("rooms").update({status:"finished"}).eq("code",room.code);
-    if(!ue)showResults();
-  }
+
+
+/* =========================
+   TWORZENIE POKOJU
+========================= */
+
+async function createRoom() {
+
+    $("status").textContent =
+        "Tworzenie pokoju...";
+
+    for (
+        let i = 0;
+        i < 15;
+        i++
+    ) {
+
+        const code =
+            makeCode();
+
+        const {
+            data,
+            error
+        } = await sb
+            .from("rooms")
+            .insert({
+                code: code,
+                status: "lobby",
+                current_question: 0
+            })
+            .select(
+                "code,status,current_question"
+            )
+            .single();
+
+        if (!error) {
+
+            room = data;
+
+            break;
+        }
+    }
+
+
+    if (!room) {
+
+        $("status").textContent =
+            "Nie udało się utworzyć pokoju. Sprawdź tabelę rooms i uprawnienia RLS.";
+
+        return;
+    }
+
+
+    $("code").textContent =
+        room.code;
+
+    makeQR();
+
+
+    $("status").textContent =
+        "Zeskanuj QR lub wpisz kod, aby dołączyć.";
+
+
+    poll =
+        setInterval(
+            refreshLobby,
+            700
+        );
+
+    refreshLobby();
+
 }
-async function showResults(){
-  $("lobby").classList.add("hidden");
-  $("running").classList.add("hidden");
-  $("results").classList.remove("hidden");
-  const {data:ps}=await sb.from("players")
-    .select("nickname,score")
-    .eq("room_code",room.code)
-    .order("score",{ascending:false})
-    .limit(3);
-  const labels=["🥇","🥈","🥉"],classes=["p1","p2","p3"];
-  $("podium").innerHTML="";
-  (ps||[]).forEach((p,i)=>{
-    const d=document.createElement("div");
-    d.className="place "+classes[i];
-    d.innerHTML=`<div class="name">${labels[i]} ${esc(p.nickname)}</div><div class="block">${i+1}</div><div class="score">${p.score||0} pkt</div>`;
-    $("podium").appendChild(d);
-  });
+
+
+/* =========================
+   LOBBY
+========================= */
+
+async function refreshLobby() {
+
+    if (
+        !room ||
+        room.status !== "lobby"
+    ) {
+        return;
+    }
+
+
+    const {
+        data: ps,
+        error
+    } = await sb
+        .from("players")
+        .select(
+            "id,nickname,finished,score"
+        )
+        .eq(
+            "room_code",
+            room.code
+        )
+        .order(
+            "joined_at",
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        $("status").textContent =
+            "Błąd odczytu graczy: " +
+            error.message;
+
+        return;
+    }
+
+
+    const arr =
+        ps || [];
+
+
+    $("playerCount").textContent =
+        `${arr.length} ${
+            arr.length === 1
+                ? "gracz"
+                : "graczy"
+        }`;
+
+
+    $("players").innerHTML =
+        arr.map(
+            p =>
+                `<div class="player">
+                    👤 ${esc(p.nickname)}
+                </div>`
+        ).join("");
+
+
+    $("start").disabled =
+        arr.length === 0;
+
 }
+
+
+/* =========================
+   START QUIZU
+========================= */
+
+$("start").onclick =
+    async () => {
+
+        if (!room) {
+            return;
+        }
+
+
+        $("start").disabled =
+            true;
+
+        $("status").textContent =
+            "Uruchamianie quizu...";
+
+
+        const {
+            data,
+            error
+        } = await sb
+            .from("rooms")
+            .update({
+                status: "playing",
+                current_question: 0
+            })
+            .eq(
+                "code",
+                room.code
+            )
+            .select(
+                "code,status,current_question"
+            )
+            .single();
+
+
+        if (error) {
+
+            $("status").textContent =
+                "Błąd uruchomienia: " +
+                error.message;
+
+            $("start").disabled =
+                false;
+
+            return;
+        }
+
+
+        room = data;
+
+
+        $("lobby")
+            .classList
+            .add("hidden");
+
+        $("running")
+            .classList
+            .remove("hidden");
+
+
+        $("runCode").textContent =
+            room.code;
+
+
+        clearInterval(poll);
+
+
+        poll =
+            setInterval(
+                refreshPlaying,
+                700
+            );
+
+
+        refreshPlaying();
+    };
+
+
+/* =========================
+   QUIZ
+========================= */
+
+async function refreshPlaying() {
+
+    if (!room) {
+        return;
+    }
+
+
+    const {
+        data: r
+    } = await sb
+        .from("rooms")
+        .select(
+            "code,status,current_question"
+        )
+        .eq(
+            "code",
+            room.code
+        )
+        .maybeSingle();
+
+
+    if (!r) {
+        return;
+    }
+
+
+    room = r;
+
+
+    if (
+        r.status === "finished"
+    ) {
+
+        clearInterval(poll);
+
+        showResults();
+
+        return;
+    }
+
+
+    const {
+        data: ps,
+        error
+    } = await sb
+        .from("players")
+        .select(
+            "id,nickname,finished,score"
+        )
+        .eq(
+            "room_code",
+            room.code
+        );
+
+
+    if (error) {
+        return;
+    }
+
+
+    const arr =
+        ps || [];
+
+
+    const done =
+        arr.filter(
+            p => p.finished
+        ).length;
+
+
+    $("runInfo").textContent =
+        `Ukończyło: ${done}/${arr.length}`;
+
+
+    $("finishInfo").textContent =
+        arr.length
+            ? (
+                done === arr.length
+                    ? "Wszyscy ukończyli — wyniki za chwilę..."
+                    : "Uczniowie rozwiązują quiz niezależnie."
+            )
+            : "";
+
+
+    if (
+        arr.length &&
+        done === arr.length &&
+        !finishing
+    ) {
+
+        finishing = true;
+
+
+        const {
+            error: ue
+        } = await sb
+            .from("rooms")
+            .update({
+                status: "finished"
+            })
+            .eq(
+                "code",
+                room.code
+            );
+
+
+        if (!ue) {
+            showResults();
+        }
+    }
+
+}
+
+
+/* =========================
+   WYNIKI
+========================= */
+
+async function showResults() {
+
+    $("lobby")
+        .classList
+        .add("hidden");
+
+    $("running")
+        .classList
+        .add("hidden");
+
+    $("results")
+        .classList
+        .remove("hidden");
+
+
+    const {
+        data: ps
+    } = await sb
+        .from("players")
+        .select(
+            "nickname,score"
+        )
+        .eq(
+            "room_code",
+            room.code
+        )
+        .order(
+            "score",
+            {
+                ascending: false
+            }
+        )
+        .limit(3);
+
+
+    const labels =
+        ["🥇", "🥈", "🥉"];
+
+    const classes =
+        ["p1", "p2", "p3"];
+
+
+    $("podium").innerHTML = "";
+
+
+    (ps || []).forEach(
+        (p, i) => {
+
+            const d =
+                document.createElement(
+                    "div"
+                );
+
+
+            d.className =
+                "place " +
+                classes[i];
+
+
+            d.innerHTML =
+                `
+                <div class="name">
+                    ${labels[i]}
+                    ${esc(p.nickname)}
+                </div>
+
+                <div class="block">
+                    ${i + 1}
+                </div>
+
+                <div class="score">
+                    ${p.score || 0} pkt
+                </div>
+                `;
+
+
+            $("podium")
+                .appendChild(d);
+        }
+    );
+
+}
+
+
+/* =========================
+   START
+========================= */
+
 createRoom();
+
 </script>
 
-</body></html>
+</body>
+</html>
