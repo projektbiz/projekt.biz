@@ -512,9 +512,11 @@ button:disabled{
   }
 }
 </style>
+<link rel="stylesheet" href="design.css">
+<script src="design.js" defer></script>
 </head>
 
-<body>
+<body data-view="game">
 
 <div class="wrap">
 
@@ -542,7 +544,7 @@ button:disabled{
       DOŁĄCZ
     </button>
 
-    <div id="joinMsg" class="status muted"></div>
+    <div id="joinMsg" class="status muted" role="status" aria-live="polite"></div>
   </div>
 
   <!-- WAIT -->
@@ -604,11 +606,12 @@ button:disabled{
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="connection.js"></script>
 
 <script>
-const SUPABASE_URL = "https://megktvolzzqkeykzjkhe.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_qL5wS3xcDN8CbnUQ-Uvusw_zVxoBOMH";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://bqsgzslcbowtilrfnzcw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_cyQdAW6uk5wfMCbU0t-3IA_faoY1a6C";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const QUESTION_BANK = [
 { q:"Co przedstawia harmonogram projektu?", a:["Plan działań w czasie","Wyłącznie listę kosztów","Listę sponsorów","Opis pracowników"], c:0 },
@@ -688,7 +691,10 @@ $("joinBtn").onclick = join;
 $("code").onkeydown = e => { if(e.key==="Enter") join(); };
 $("nick").onkeydown = e => { if(e.key==="Enter") join(); };
 
+let joining = false;
+
 async function join(){
+  if(joining) return;
   roomCode = $("code").value.trim().toUpperCase();
   const nick = $("nick").value.trim();
 
@@ -697,32 +703,57 @@ async function join(){
     return;
   }
 
+  joining = true;
+  $("joinBtn").disabled = true;
+  $("joinBtn").setAttribute("aria-busy", "true");
+  $("code").disabled = true;
+  $("nick").disabled = true;
   msg("Dołączanie...");
 
-  const { data:r, error:re } = await sb
-    .from("rooms")
-    .select("code,status,current_question")
-    .eq("code",roomCode)
-    .maybeSingle();
+  try {
+    ProjectoraConnection.requireClient(sb);
+    const p = await ProjectoraConnection.request(async signal => {
+      const { data:r, error:re } = await sb
+        .from("rooms")
+        .select("code,status,current_question")
+        .eq("code",roomCode)
+        .maybeSingle()
+        .abortSignal(signal);
 
-  if(re){ msg("Błąd pokoju: "+re.message); return; }
-  if(!r){ msg("Nie znaleziono pokoju."); return; }
-  if(r.status!=="lobby"){ msg("Ten quiz już się rozpoczął."); return; }
+      if(re) throw re;
+      if(signal.aborted) return null;
+      if(!r){ msg("Nie znaleziono pokoju."); return null; }
+      if(r.status!=="lobby"){ msg("Ten quiz już się rozpoczął."); return null; }
 
-  const { data:p, error:pe } = await sb
-    .from("players")
-    .insert({ room_code:roomCode, nickname:nick, score:0, finished:false })
-    .select("id,room_code,nickname,score,finished")
-    .single();
+      const { data:p, error:pe } = await sb
+        .from("players")
+        .insert({ room_code:roomCode, nickname:nick, score:0, finished:false })
+        .select("id,room_code,nickname,score,finished")
+        .single()
+        .abortSignal(signal);
 
-  if(pe){ msg("Nie udało się dołączyć: "+pe.message); return; }
+      if(pe) throw pe;
+      if(!p) throw new Error("Brak danych gracza w odpowiedzi serwera");
+      return p;
+    });
+    if(!p) return;
 
-  player = p;
-  $("hello").textContent = "Grasz jako: " + nick;
-  $("roomPill").textContent = roomCode;
-
-  show("wait");
-  startRoomPolling();
+    player = p;
+    $("hello").textContent = "Grasz jako: " + nick;
+    $("roomPill").textContent = roomCode;
+    msg("");
+    show("wait");
+    startRoomPolling();
+  } catch(error) {
+    console.error("Błąd dołączania do gry:", error);
+    msg(ProjectoraConnection.message(error));
+  } finally {
+    joining = false;
+    $("joinBtn").disabled = false;
+    $("joinBtn").removeAttribute("aria-busy");
+    $("code").disabled = false;
+    $("nick").disabled = false;
+  }
 }
 
 function startRoomPolling(){
